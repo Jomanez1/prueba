@@ -141,7 +141,10 @@
     }
     .ad-banner-top    { top: 0; border-top: none; }
     .ad-banner-bottom { bottom: 0; border-bottom: none; }
-    body.ad-production .ad-banner { border: none; background: transparent; font-size: 0; }
+    /* En production: fondo transparente pero mantenemos la altura */
+    body.ad-production .ad-banner { border: none; background: transparent; }
+    /* El ins siempre ocupa el espacio aunque esté vacío */
+    .ad-banner .adsbygoogle { display: block !important; min-height: 50px; width: 100%; }
 
     /* ── Intersticial ── */
     #ad-interstitial {
