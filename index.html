@@ -13,7 +13,7 @@
   ════════════════════════════════════════════════════════════════ -->
   <script>
     const ADMOB_CONFIG = {
-      mode: 'test',   // 'test' | 'production'
+      mode: 'production',   // 'test' | 'production'
 
       test: {
         appId:        'ca-app-pub-3940256099942544~3347511713',
@@ -349,10 +349,10 @@
 <!-- ── Banner superior ── -->
 <div class="ad-banner ad-banner-top" id="ad-banner-top">
   <ins class="adsbygoogle"
-       id="ins-banner-top"
-       style="display:inline-block;width:320px;height:50px"
-       data-ad-client=""
-       data-ad-slot=""></ins>
+       style="display:block"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
 <!-- ── Intersticial overlay ── -->
@@ -474,10 +474,10 @@
 <!-- ── Banner inferior ── -->
 <div class="ad-banner ad-banner-bottom" id="ad-banner-bottom">
   <ins class="adsbygoogle"
-       id="ins-banner-bottom"
-       style="display:inline-block;width:320px;height:50px"
-       data-ad-client=""
-       data-ad-slot=""></ins>
+       style="display:block"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
 
@@ -642,29 +642,19 @@ function wmo(code) {
 const AdMob = (() => {
 
   function initBanners() {
-    // 1. Inyectar publisher ID y slots en los <ins> antes de cargar el script
-    const insTop = document.getElementById('ins-banner-top');
-    const insBot = document.getElementById('ins-banner-bottom');
-    if (insTop) {
-      insTop.setAttribute('data-ad-client', AD_IDS.appId.split('~')[0]);
-      insTop.setAttribute('data-ad-slot',   AD_IDS.bannerTop.split('/')[1]);
-    }
-    if (insBot) {
-      insBot.setAttribute('data-ad-client', AD_IDS.appId.split('~')[0]);
-      insBot.setAttribute('data-ad-slot',   AD_IDS.bannerBottom.split('/')[1]);
-    }
+    // Inyectar data-ad-client y data-ad-slot en los ins — igual que MetroMaestro
+    document.querySelectorAll('.adsbygoogle').forEach((ad, idx) => {
+      ad.setAttribute('data-ad-client', AD_IDS.appId.split('~')[0]);
+      ad.setAttribute('data-ad-slot',
+        idx === 0 ? AD_IDS.bannerTop.split('/')[1] : AD_IDS.bannerBottom.split('/')[1]
+      );
+    });
 
-    // 2. Cargar script de AdSense igual que MetroMaestro
+    // Cargar script de AdMob/AdSense dinámicamente — igual que MetroMaestro
     const script = document.createElement('script');
     script.async = true;
     script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_IDS.appId.split('~')[0]}`;
     script.crossOrigin = 'anonymous';
-    script.onload = () => {
-      try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      } catch(e) {}
-    };
     script.onerror = () => {};
     document.head.appendChild(script);
 
