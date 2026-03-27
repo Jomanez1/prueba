@@ -28,7 +28,7 @@
         interstitial: 'ca-app-pub-2753616648390510/8848449268',  // ← intersticial
       },
 
-      interstitialCooldown:  180,  // segundos mínimos entre intersticiales
+      interstitialCooldown:  0,    // segundos mínimos entre intersticiales
       interstitialCountdown:   5,  // segundos del contador antes de cerrar
     };
     const AD_IDS = ADMOB_CONFIG[ADMOB_CONFIG.mode];
@@ -107,7 +107,6 @@
       --sky-night: linear-gradient(160deg, #0d1b3e 0%, #1a2d5a 60%, #243b6e 100%);
       --sky-dawn:  linear-gradient(160deg, #f7b97a 0%, #f6cfb0 50%, #dce8f5 100%);
       --sky-storm: linear-gradient(160deg, #555f70 0%, #8a95a0 60%, #b0bac3 100%);
-      --banner-h: 50px;
     }
 
     html, body { height: 100%; }
@@ -116,8 +115,7 @@
       min-height: 100vh;
       background: var(--sky-day);
       transition: background 1.2s ease;
-      padding-top: var(--banner-h);
-      padding-bottom: var(--banner-h);
+      padding-bottom: 60px; /* espacio para banner inferior fijo */
     }
     body.night { background: var(--sky-night); }
     body.dawn  { background: var(--sky-dawn); }
@@ -133,18 +131,18 @@
 
     /* ── AdMob banners ── */
     .ad-banner {
-      position: fixed; left: 0; right: 0; height: var(--banner-h);
-      background: #f1f5f9; display: flex; align-items: center; justify-content: center;
-      z-index: 1000; border: 1px dashed #cbd5e1;
-      font-size: .65rem; color: #94a3b8; letter-spacing: .05em; text-transform: uppercase;
-      overflow: hidden;
+      width: 100%; height: 50px; max-height: 50px;
+      background: #f1f5f9;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
     }
-    .ad-banner-top    { top: 0; border-top: none; }
-    .ad-banner-bottom { bottom: 0; border-bottom: none; }
-    /* En production: fondo transparente pero mantenemos la altura */
-    body.ad-production .ad-banner { border: none; background: transparent; }
-    /* El ins siempre ocupa el espacio aunque esté vacío */
-    .ad-banner .adsbygoogle { display: block !important; min-height: 50px; width: 100%; }
+    .ad-banner-top    { position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #e2e8f0; }
+    .ad-banner-bottom { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; border-top: 1px solid #e2e8f0; }
+    .ad-banner ins, .ad-banner .adsbygoogle {
+      display: block !important;
+      width: 320px !important; height: 50px !important;
+      max-height: 50px !important; overflow: hidden !important;
+    }
 
     /* ── Intersticial ── */
     #ad-interstitial {
@@ -352,9 +350,7 @@
 <!-- ── Banner superior ── -->
 <div class="ad-banner ad-banner-top" id="ad-banner-top">
   <ins class="adsbygoogle"
-       style="display:block"
-       data-ad-format="auto"
-       data-full-width-responsive="true"></ins>
+       style="display:inline-block;width:320px;height:50px"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
@@ -477,9 +473,7 @@
 <!-- ── Banner inferior ── -->
 <div class="ad-banner ad-banner-bottom" id="ad-banner-bottom">
   <ins class="adsbygoogle"
-       style="display:block"
-       data-ad-format="auto"
-       data-full-width-responsive="true"></ins>
+       style="display:inline-block;width:320px;height:50px"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
@@ -734,8 +728,8 @@ async function fetchWeather(overrideCity) {
     const r = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
       + `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day`
-      + `&hourly=temperature_2m,weather_code`
-      + `&daily=weather_code,temperature_2m_max,temperature_2m_min`
+      + `&hourly=temperature_2m,weather_code,wind_speed_10m`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max`
       + `&timezone=auto&forecast_days=16`
     );
     const data = await r.json();
@@ -803,6 +797,7 @@ function renderForecast(daily) {
         <p class="text-base my-1">${fw.icon}</p>
         <p class="text-slate-700 text-xs font-semibold">${Math.round(daily.temperature_2m_max[i])}°</p>
         <p class="text-slate-400 text-xs">${Math.round(daily.temperature_2m_min[i])}°</p>
+        <p class="text-slate-400" style="font-size:.6rem;margin-top:2px">💨${Math.round(daily.wind_speed_10m_max[i])}</p>
       </div>`;
   });
   document.getElementById('forecast').innerHTML = `
@@ -843,8 +838,9 @@ function renderTOD(hourly, dayIndex, dateStr) {
     for (let x = s; x <= e; x++) if (hourIndex[x] !== undefined) idxs.push(hourIndex[x]);
     if (!idxs.length) return null;
     const avg  = Math.round(idxs.reduce((sum,i) => sum + hourly.temperature_2m[i], 0) / idxs.length);
+    const wind = Math.round(idxs.reduce((sum,i) => sum + (hourly.wind_speed_10m?.[i] || 0), 0) / idxs.length);
     const code = hourly.weather_code[idxs[Math.floor(idxs.length / 2)]];
-    return { temp: avg, code };
+    return { temp: avg, wind, code };
   }
 
   // Etiqueta del día seleccionado
@@ -861,11 +857,13 @@ function renderTOD(hourly, dayIndex, dateStr) {
     const stats = sliceStats(slot.start, slot.end);
     const icon  = stats ? wmo(stats.code).icon : slot.emoji;
     const temp  = stats ? stats.temp + '°' : '—';
+    const wind  = stats && stats.wind !== undefined ? '💨' + stats.wind : '';
     return `
       <div class="tod-slot">
         <p class="text-slate-500 text-xs font-medium mb-1">${slot.label}</p>
         <p class="tod-icon">${icon}</p>
         <p class="text-slate-700 font-semibold text-sm mt-1">${temp}</p>
+        <p class="text-slate-400" style="font-size:.65rem;margin-top:2px">${wind}</p>
       </div>`;
   }).join('');
 }
@@ -960,8 +958,8 @@ async function geoLocate() {
         const wr = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
           + `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day`
-          + `&hourly=temperature_2m,weather_code`
-          + `&daily=weather_code,temperature_2m_max,temperature_2m_min`
+          + `&hourly=temperature_2m,weather_code,wind_speed_10m`
+          + `&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max`
           + `&timezone=auto&forecast_days=16`
         );
         const data = await wr.json();
@@ -1003,6 +1001,7 @@ document.getElementById('city-input').addEventListener('keydown', e => {
 
 AdMob.initBanners();
 AdMob.preloadInterstitial();
+setTimeout(() => AdMob.showInterstitial(), 3000); // intersticial al arrancar
 applyStaticTranslations();
 updateLangButtons();
 renderFavs();
