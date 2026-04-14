@@ -1216,8 +1216,7 @@ function saveTTSConfig(){
 // Keep old names as aliases for backward-compat with purchase modal links
 function openTTSModal(){ }
 function closeTTSModal(){ }
-function openPurchaseModal(){ /* panel eliminado */ }
-function closePurchaseModal(){ }
+
 
 // ══════════════════════════════════════════════════════════
 //  CALENDAR
@@ -1363,95 +1362,51 @@ function updateUI(){
 }
 
 // ══════════════════════════════════════════════════════════
-//  SISTEMA DE MONETIZACIÓN COMPLETO
-//  ─ Banner inferior (AdMob banner / AdSense)
-//  ─ Intersticial (cada N capítulos)
-//  ─ Compra única 1,95€ para eliminar publicidad
+//  SISTEMA DE ANUNCIOS (sin opción de compra premium)
 // ══════════════════════════════════════════════════════════
-
-// ── Estado de Premium ────────────────────────────────────
-const PREMIUM_KEY = 'verbum_premium_v1';
-
 const ADS = {
   isPremium: false,
   chaptersSinceAd: 0,
-  INTERSTITIAL_EVERY: 3,   // Mostrar intersticial cada 3 capítulos
+  INTERSTITIAL_EVERY: 3,
   interstitialTimer: null,
-  countdownSec: 5,          // Segundos antes de poder cerrar
+  countdownSec: 5,
 };
 
-// Inicializar estado premium desde localStorage
-function initPremium(){
-  try {
-    const stored = localStorage.getItem(PREMIUM_KEY);
-    if(stored){
-      const data = JSON.parse(stored);
-      // Verificar que el token sea válido (en producción: verificar con servidor)
-      if(data && data.purchased && data.token){
-        ADS.isPremium = true;
-      }
-    }
-  } catch(e){ ADS.isPremium = false; }
-  applyPremiumState();
-}
+function initPremium(){ /* sin compra premium */ }
+function applyPremiumState(){ }
 
-function applyPremiumState(){
-  const banner = document.getElementById('adBannerBar');
-  const removeBtn = document.getElementById('removeAdsBtn');
-  const premiumBadge = document.getElementById('premiumBadge');
-
-  if(ADS.isPremium){
-    if(banner) banner.classList.add('hidden');
-    document.body.classList.remove('has-banner');
-
-    document.querySelectorAll('.ad-interstitial-slot').forEach(el => el.style.display = 'none');
-  } else {
-    if(banner) banner.classList.remove('hidden');
-    document.body.classList.add('has-banner');
-
-  }
-}
-
-// ── Banner ────────────────────────────────────────────────
-// Llamar desde Android AdMob listener cuando el banner cargue:
-//   window.VerbumApp.onBannerLoaded()
-// o cuando falle:
-//   window.VerbumApp.onBannerFailed()
 function onBannerLoaded(){
-  // En Android: el banner nativo ya está visible, ocultar el slot HTML
-  document.getElementById('adBannerContent').style.opacity = '0';
+  const c = document.getElementById('adBannerContent');
+  if(c) c.style.opacity = '0';
 }
 
-// ── Intersticial ─────────────────────────────────────────
 function checkInterstitialTrigger(){
-  if(ADS.isPremium) return;
   ADS.chaptersSinceAd++;
   if(ADS.chaptersSinceAd >= ADS.INTERSTITIAL_EVERY){
     ADS.chaptersSinceAd = 0;
-    // Pequeño delay para que el capítulo cargue primero
     setTimeout(showInterstitial, 800);
   }
 }
 
 function showInterstitial(){
-  if(ADS.isPremium) return;
   const overlay = document.getElementById('adInterstitialOverlay');
   const closeBtn = document.getElementById('adCloseBtn');
   const skipBtn = document.getElementById('adSkipBtn');
   const secSpan = document.getElementById('adSeconds');
+  if(!overlay) return;
 
   overlay.classList.remove('hidden');
   closeBtn.classList.add('disabled');
   skipBtn.classList.add('disabled');
 
   let secs = ADS.countdownSec;
-  secSpan.textContent = secs;
+  if(secSpan) secSpan.textContent = secs;
   document.getElementById('adTimer').style.display = '';
 
   clearInterval(ADS.interstitialTimer);
   ADS.interstitialTimer = setInterval(()=>{
     secs--;
-    secSpan.textContent = secs;
+    if(secSpan) secSpan.textContent = secs;
     if(secs <= 0){
       clearInterval(ADS.interstitialTimer);
       closeBtn.classList.remove('disabled');
@@ -1461,7 +1416,6 @@ function showInterstitial(){
     }
   }, 1000);
 
-  // Notificar a Android para mostrar el intersticial nativo
   if(window.AndroidBridge && window.AndroidBridge.showInterstitial){
     window.AndroidBridge.showInterstitial();
   }
@@ -1469,148 +1423,18 @@ function showInterstitial(){
 
 function closeInterstitial(){
   const overlay = document.getElementById('adInterstitialOverlay');
-  overlay.classList.add('hidden');
+  if(overlay) overlay.classList.add('hidden');
   clearInterval(ADS.interstitialTimer);
 }
 
-// ── Compra / Purchase (desactivado — opción eliminada) ────
+// Stubs (no purchase modal)
 function openPurchaseModal(){ }
 function closePurchaseModal(){ }
-function getPurchaseHTML(){ return ''; 
-}
 
-async function processPurchase(){
-  const btn = document.querySelector('.purchase-btn');
-  if(btn){
-    btn.textContent = '⏳ Procesando...';
-    btn.disabled = true;
-    btn.style.opacity = '0.7';
-  }
-
-  // ──────────────────────────────────────────────────────────────────
-  // INTEGRACIÓN CON TIENDAS (reemplazar bloque según plataforma):
-  //
-  // GOOGLE PLAY (Android WebView):
-  //   window.AndroidBridge.launchPurchase('verbum_no_ads_199');
-  //   El resultado llega por callback: window.VerbumApp.onPurchaseSuccess(token)
-  //
-  // APPLE APP STORE (WKWebView / iOS):
-  //   window.webkit.messageHandlers.purchase.postMessage({productId:'verbum_no_ads_199'})
-  //   El resultado llega por: window.VerbumApp.onPurchaseSuccess(token)
-  //
-  // WEB (Stripe / PayPal):
-  //   Redirigir a tu payment link de Stripe:
-  //   window.location.href = 'https://buy.stripe.com/TU_PAYMENT_LINK';
-  //   Stripe puede hacer redirect de vuelta con ?purchase_success=true
-  // ──────────────────────────────────────────────────────────────────
-
-  // Detectar plataforma
-  if(window.AndroidBridge && window.AndroidBridge.launchPurchase){
-    // Android: delegar al SDK nativo de Google Play Billing
-    window.AndroidBridge.launchPurchase('verbum_no_ads_199');
-    return; // El resultado llega por onPurchaseSuccess callback
-  }
-
-  if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.purchase){
-    // iOS: delegar al StoreKit nativo
-    window.webkit.messageHandlers.purchase.postMessage({productId:'verbum_no_ads_199'});
-    return; // El resultado llega por onPurchaseSuccess callback
-  }
-
-  // Web: simular flujo (reemplazar con Stripe redirect en producción)
-  // En producción: window.location.href = 'https://buy.stripe.com/TU_LINK';
-  await new Promise(r=>setTimeout(r,1800)); // Simula latencia de red
-  activatePremium('demo_token_' + Date.now());
-}
-
-function activatePremium(token){
-  ADS.isPremium = true;
-  try {
-    localStorage.setItem(PREMIUM_KEY, JSON.stringify({
-      purchased: true,
-      token: token,
-      date: new Date().toISOString(),
-      version: '1.0'
-    }));
-  } catch(e){}
-
-  applyPremiumState();
-  closeInterstitial();
-  toast('✦ Sin publicidad activado');
-}
-
-async function restorePurchase(){
-  // Android: window.AndroidBridge.restorePurchases()
-  // iOS: window.webkit.messageHandlers.restore.postMessage({})
-  // Web: verificar con tu backend
-
-  if(window.AndroidBridge && window.AndroidBridge.restorePurchases){
-    window.AndroidBridge.restorePurchases();
-    return;
-  }
-
-  // Verificar localStorage como fallback web
-  try {
-    const stored = localStorage.getItem(PREMIUM_KEY);
-    if(stored){
-      const data = JSON.parse(stored);
-      if(data && data.purchased){
-        activatePremium(data.token);
-        return;
-      }
-    }
-  } catch(e){}
-
-  toast('No se encontró ninguna compra anterior.');
-}
-
-// Llamado desde Android cuando la compra Google Play es exitosa
-// AndroidBridge.onPurchaseSuccess(token) → window.VerbumApp.onPurchaseSuccess(token)
 window.VerbumApp = window.VerbumApp || {};
-window.VerbumApp.onPurchaseSuccess = function(token){
-  activatePremium(token || 'native_purchase_' + Date.now());
-};
-window.VerbumApp.onPurchaseFailed = function(reason){
-  toast('No se pudo completar la compra: ' + (reason||''));
-  const btn = document.querySelector('.purchase-btn');
-  if(btn){ btn.textContent = '✦ Comprar ahora — 1,95€'; btn.disabled = false; btn.style.opacity = '1'; }
-};
 window.VerbumApp.onBannerLoaded = onBannerLoaded;
-window.VerbumApp.hideBannerHTML = ()=>{ document.getElementById('adBannerContent').style.display='none'; };
+window.VerbumApp.hideBannerHTML = ()=>{ const c=document.getElementById('adBannerContent'); if(c) c.style.display='none'; };
 window.VerbumApp.showInterstitialHTML = showInterstitial;
-
-// ══════════════════════════════════════════════════════════
-//  ADMOB INTEGRATION HELPERS
-//  (llamar desde Android WebView)
-// ══════════════════════════════════════════════════════════
-// Android puede llamar: window.VerbumApp.showInterstitial()
-// y el HTML responderá mostrando un overlay vacío donde
-// el SDK de AdMob inserta el anuncio real.
-window.VerbumApp = {
-  showInterstitial: function(){
-    // Hook para Android AdMob SDK
-    console.log('[AdMob] Interstitial slot triggered');
-  },
-  onAdLoaded: function(slot){
-    const placeholder=document.getElementById('adPlaceholder');
-    if(placeholder) placeholder.style.display='none';
-  },
-  onAdFailed: function(slot,error){
-    console.warn('[AdMob] Ad failed for slot:', slot, error);
-  }
-};
-
-// AdSense init (web)
-// AdSense push: activar solo con Publisher ID real
-
-// ══════════════════════════════════════════════════════════
-//  TOAST
-// ══════════════════════════════════════════════════════════
-function toast(msg){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),2400);
-}
 
 // ══════════════════════════════════════════════════════════
 //  INIT
