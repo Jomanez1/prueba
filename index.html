@@ -1,1472 +1,506 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Verbum — La Biblia Sagrada</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lunita · Luz Nocturna</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #f5e6f0;
+      --warm: #ffcc88;
+      --soft: #ffe0f0;
+      --moon: #fff5f8;
+      --accent: #e8a0c0;
+      --text: #7a5060;
+      --star: #ffd580;
+    }
 
-<!-- ══════════════════════════════════════════
-     ADMOB / GOOGLE PLAY STORE INTEGRATION
-     ══════════════════════════════════════════
-     Para subir al Play Store como WebView App:
-     1. Crear proyecto Android con WebView que cargue este HTML
-     2. Añadir AdMob SDK en build.gradle:
-        implementation 'com.google.android.gms:play-services-ads:22.6.0'
-     3. Reemplazar los IDs de prueba por los reales de AdMob
-     4. Los bloques .admob-banner y .admob-interstitial son
-        los puntos donde inyectar los anuncios desde Java/Kotlin
-     ══════════════════════════════════════════ -->
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-<!-- AdSense: Descomenta cuando tengas tu Publisher ID real de AdSense.
-     Con ID ficticio puede bloquear la carga en algunos navegadores.
-     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_REAL" crossorigin="anonymous"></script>
--->
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background 1.2s ease;
+      overflow: hidden;
+      position: relative;
+    }
 
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+    body.dark-mode {
+      --bg: #1a0f2e;
+      --text: #e8c8d8;
+      --soft: #2a1540;
+    }
 
-<style>
-/* ═══════════════════════════════════════
-   VARIABLES & RESET
-═══════════════════════════════════════ */
-:root {
-  --gold:#D4AF37; --gold2:#F0D060; --gold-dim:#7A5F10;
-  --cream:#F8F0DC; --dark:#0F0A04; --dark2:#1C1206; --dark3:#2A1C0A;
-  --ad-h-banner:60px; /* altura banner publicitario inferior */
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{
-  background:var(--dark); color:var(--cream);
-  font-family:'Crimson Text',Georgia,serif;
-  min-height:100vh; overflow-x:hidden;
-  /* espacio para banner AdMob inferior */
-  padding-bottom:var(--ad-h-banner);
-}
-body::after{
-  content:''; position:fixed; inset:0;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
-  pointer-events:none; z-index:0; opacity:0.5;
-}
+    /* Ambient particles */
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: floatUp linear infinite;
+      opacity: 0;
+    }
 
-/* ═══════════════════════════════════════
-   ADMOB BANNER (inferior fijo)
-   En Android: este div se oculta y AdMob
-   inserta su propio banner nativo
-═══════════════════════════════════════ */
-.admob-banner{
-  position:fixed; bottom:0; left:0; right:0; z-index:999;
-  height:var(--ad-h-banner);
-  background:#0a0700;
-  border-top:1px solid rgba(212,175,55,0.15);
-  display:flex; align-items:center; justify-content:center;
-  overflow:hidden;
-}
-/* Anuncio web (AdSense). En app Android se reemplaza por AdMob nativo */
-.admob-banner ins{
-  display:block; width:100%; height:100%;
-}
-.ad-placeholder{
-  font-family:'Cinzel',serif; font-size:0.65rem;
-  color:rgba(212,175,55,0.25); letter-spacing:0.1em;
-  text-align:center;
-}
-/* Espacio para anuncio intersticial (entre capítulos) */
-.ad-interstitial-slot{
-  width:100%; margin:1.5rem 0;
-  min-height:90px;
-  display:flex; align-items:center; justify-content:center;
-  border:1px dashed rgba(212,175,55,0.1);
-  border-radius:4px; overflow:hidden;
-}
-.ad-interstitial-slot ins{ display:block; width:100%; }
+    @keyframes floatUp {
+      0%   { transform: translateY(0) scale(1);   opacity: 0; }
+      10%  { opacity: 0.4; }
+      90%  { opacity: 0.15; }
+      100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+    }
 
-/* ═══════════════════════════════════════
-   BG ART
-═══════════════════════════════════════ */
-.bg-art{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
-.bg-art svg{position:absolute;}
-@keyframes slowRot{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes drift{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+    /* ── MOON ── */
+    .moon-wrap {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-/* ═══════════════════════════════════════
-   NAV
-═══════════════════════════════════════ */
-nav{
-  position:fixed; top:0; left:0; right:0; z-index:200; height:62px;
-  background:rgba(15,10,4,0.97); border-bottom:1px solid rgba(212,175,55,0.2);
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 1.2rem; backdrop-filter:blur(16px);
-}
-.logo{font-family:'Cinzel',serif;font-size:1.35rem;font-weight:700;color:var(--gold);letter-spacing:0.18em;display:flex;align-items:center;gap:0.45rem;}
-.nav-center{display:flex;gap:0;}
-.nav-btn{background:transparent;border:none;border-bottom:2px solid transparent;color:rgba(248,240,220,0.45);font-family:'Cinzel',serif;font-size:0.69rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 0.8rem;cursor:pointer;transition:all 0.25s;}
-.nav-btn:hover{color:var(--gold)}.nav-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
-.nav-right{display:flex;align-items:center;gap:0.6rem;}
-.lang-sel{background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.28);color:var(--gold);padding:0.3rem 0.5rem;font-family:'Cinzel',serif;font-size:0.68rem;cursor:pointer;border-radius:3px;}
-.lang-sel option{background:var(--dark2);}
-.tts-badge{background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.2);color:rgba(212,175,55,0.6);padding:0.3rem 0.6rem;border-radius:3px;font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.05em;cursor:pointer;transition:all 0.2s;}
-.tts-badge:hover{color:var(--gold);border-color:rgba(212,175,55,0.4);}
-.tts-badge.premium{color:#7dd3fc;border-color:rgba(125,211,252,0.35);}
+    .moon-glow {
+      position: absolute;
+      inset: -30px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,220,180,0.55) 0%, transparent 70%);
+      filter: blur(18px);
+      animation: pulseGlow 3s ease-in-out infinite;
+      transition: opacity 1s ease;
+    }
 
-/* ═══════════════════════════════════════
-   PAGES
-═══════════════════════════════════════ */
-main{padding-top:62px;min-height:100vh;position:relative;z-index:1;}
-.page{display:none;animation:fadeIn 0.45s ease;}
-.page.active{display:block;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1);   opacity: 0.9; }
+      50%       { transform: scale(1.12); opacity: 1; }
+    }
 
-/* ═══════════════════════════════════════
-   HOME
-═══════════════════════════════════════ */
-.home{min-height:calc(100vh - 62px - var(--ad-h-banner));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3rem 1.5rem;}
-.home h1{font-family:'Cinzel',serif;font-size:clamp(2.2rem,6vw,4.5rem);font-weight:700;color:var(--gold);letter-spacing:0.2em;line-height:1.1;animation:glow 4s ease-in-out infinite;}
-@keyframes glow{0%,100%{text-shadow:0 0 40px rgba(212,175,55,0.2)}50%{text-shadow:0 0 80px rgba(212,175,55,0.5)}}
-.home-sub{font-family:'IM Fell English',serif;font-style:italic;font-size:1.25rem;color:rgba(248,240,220,0.5);margin-top:0.5rem;letter-spacing:0.07em;}
-.home-verse{margin-top:1.8rem;max-width:480px;font-family:'IM Fell English',serif;font-style:italic;font-size:1.08rem;color:rgba(248,240,220,0.42);line-height:1.8;border-left:2px solid rgba(212,175,55,0.22);padding-left:1.1rem;text-align:left;}
-.home-verse cite{display:block;margin-top:0.4rem;font-size:0.82rem;color:var(--gold-dim);font-style:normal;font-family:'Cinzel',serif;letter-spacing:0.1em;}
-.home-cards{display:flex;gap:0.9rem;margin-top:2.2rem;flex-wrap:wrap;justify-content:center;}
-.home-card{background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.16);border-radius:8px;padding:1.2rem 1.4rem;cursor:pointer;transition:all 0.3s;width:155px;text-align:center;}
-.home-card:hover{background:rgba(212,175,55,0.1);border-color:rgba(212,175,55,0.42);transform:translateY(-3px);box-shadow:0 8px 28px rgba(212,175,55,0.1);}
-.hc-icon{font-size:1.7rem;margin-bottom:0.45rem;}
-.hc-ttl{font-family:'Cinzel',serif;font-size:0.72rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;}
-.hc-dsc{font-size:0.8rem;color:rgba(248,240,220,0.4);margin-top:0.25rem;}
+    .moon-svg {
+      width: 240px;
+      height: 240px;
+      filter: drop-shadow(0 12px 32px rgba(255,200,150,0.5));
+      transition: filter 1s ease, transform 0.4s ease;
+      animation: moonFloat 4s ease-in-out infinite;
+    }
 
-/* ═══════════════════════════════════════
-   BIBLE LAYOUT
-═══════════════════════════════════════ */
-.bible-layout{display:grid;grid-template-columns:265px 1fr;min-height:calc(100vh - 62px);}
-.sidebar{background:rgba(15,10,4,0.88);border-right:1px solid rgba(212,175,55,0.1);overflow-y:auto;max-height:calc(100vh - 62px);position:sticky;top:62px;}
-.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-track{background:var(--dark2)}.sidebar::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px}
-.sb-hdr{padding:0.75rem;border-bottom:1px solid rgba(212,175,55,0.1);position:sticky;top:0;background:rgba(15,10,4,0.99);z-index:10;}
-.sb-search{width:100%;background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.16);color:var(--cream);padding:0.42rem 0.65rem;font-family:'Crimson Text',serif;font-size:0.93rem;border-radius:3px;}
-.sb-search:focus{outline:none;border-color:var(--gold)}.sb-search::placeholder{color:rgba(248,240,220,0.22)}
-.test-lbl{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);padding:0.65rem 0.85rem 0.28rem;opacity:0.6;}
-.book-item{display:flex;align-items:center;justify-content:space-between;padding:0.38rem 0.85rem;cursor:pointer;transition:all 0.18s;font-size:0.91rem;color:rgba(248,240,220,0.62);border-left:2px solid transparent;}
-.book-item:hover{background:rgba(212,175,55,0.05);color:var(--cream)}
-.book-item.active{background:rgba(212,175,55,0.09);color:var(--gold);border-left-color:var(--gold)}
-.book-chapters{display:none;padding:0.3rem 0.65rem;flex-wrap:wrap;gap:0.22rem;}
-.book-item.active + .book-chapters{display:flex;}
-.ch-btn{background:rgba(212,175,55,0.07);border:1px solid rgba(212,175,55,0.13);color:rgba(248,240,220,0.52);width:27px;height:27px;display:flex;align-items:center;justify-content:center;font-family:'Crimson Text',serif;font-size:0.8rem;cursor:pointer;border-radius:2px;transition:all 0.15s;}
-.ch-btn:hover{background:rgba(212,175,55,0.18);color:var(--gold)}
-.ch-btn.active{background:var(--gold);color:var(--dark);font-weight:600}
+    @keyframes moonFloat {
+      0%, 100% { transform: translateY(0px) rotate(-1deg); }
+      50%       { transform: translateY(-10px) rotate(1deg); }
+    }
 
-/* ═══════════════════════════════════════
-   READING AREA
-═══════════════════════════════════════ */
-.reading-area{padding:2.2rem 2.8rem;max-width:760px;margin:0 auto;}
-.reading-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:0.9rem;}
-.reading-title{font-family:'Cinzel',serif;font-size:1.45rem;color:var(--gold);letter-spacing:0.08em;}
-.reading-sub{font-family:'IM Fell English',serif;font-style:italic;color:rgba(248,240,220,0.38);font-size:0.92rem;margin-top:0.18rem;}
+    .moon-svg:active { transform: scale(0.96); }
 
-/* Translation bar */
-.trans-bar{
-  display:flex; align-items:center; gap:0.6rem;
-  background:rgba(212,175,55,0.04); border:1px solid rgba(212,175,55,0.12);
-  border-radius:5px; padding:0.55rem 0.9rem; margin-bottom:1.1rem;
-  flex-wrap:wrap;
-}
-.trans-label{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.1em;color:rgba(212,175,55,0.5);text-transform:uppercase;}
-.trans-indicator{display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;color:rgba(248,240,220,0.55);}
-.trans-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 1.5s infinite;}
-@keyframes pulse{0%,100%{opacity:0.4;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
-.trans-done{color:#86efac;}
-.trans-badge{
-  margin-left:auto; font-family:'Cinzel',serif; font-size:0.6rem;
-  letter-spacing:0.08em; color:rgba(212,175,55,0.5);
-}
+    /* face */
+    .face { transition: opacity 0.5s ease; }
 
-/* Audio controls */
-.audio-ctrls{display:flex;gap:0.45rem;align-items:center;}
-.ctrl-btn{background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.22);color:var(--gold);width:37px;height:37px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.92rem;transition:all 0.2s;}
-.ctrl-btn:hover{background:rgba(212,175,55,0.2)}.ctrl-btn.playing{background:var(--gold);color:var(--dark);}
-.spd-btn{background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.16);color:rgba(248,240,220,0.52);padding:0 0.55rem;height:37px;border-radius:20px;font-family:'Cinzel',serif;font-size:0.66rem;cursor:pointer;letter-spacing:0.05em;transition:all 0.2s;}
-.spd-btn:hover{color:var(--gold)}
-.voice-sel{background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.16);color:rgba(248,240,220,0.6);padding:0 0.55rem;height:37px;border-radius:4px;font-family:'Cinzel',serif;font-size:0.62rem;cursor:pointer;max-width:130px;}
-.voice-sel option{background:var(--dark2);}
+    /* ── STARS ── */
+    .star {
+      position: absolute;
+      pointer-events: none;
+      animation: starFloat ease-in-out infinite, starTwinkle ease-in-out infinite;
+    }
 
-.div-orn{text-align:center;color:rgba(212,175,55,0.32);font-size:1rem;margin:0.7rem 0 1.4rem;letter-spacing:0.3em;}
+    @keyframes starFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%       { transform: translate(var(--dx), var(--dy)) scale(1.05); }
+    }
+    @keyframes starTwinkle {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
 
-/* Verses */
-.verse{margin-bottom:0.38rem;padding:0.22rem 0;transition:background 0.3s;border-radius:3px;line-height:1.95;font-size:1.14rem;}
-.verse.hl{background:rgba(212,175,55,0.1);padding:0.22rem 0.5rem;}
-.vn{font-family:'Cinzel',serif;font-size:0.6rem;font-weight:700;color:var(--gold);vertical-align:super;margin-right:0.28rem;letter-spacing:0.05em;opacity:0.72;}
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      gap: 16px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
-/* Translation display */
-.verse-translated{
-  display:block; margin-top:0.3rem; padding:0.4rem 0.8rem;
-  background:rgba(212,175,55,0.05); border-left:2px solid rgba(212,175,55,0.2);
-  font-style:italic; font-size:0.95rem; color:rgba(248,240,220,0.55);
-  border-radius:0 3px 3px 0;
-}
-.trans-lang-label{font-family:'Cinzel',serif;font-size:0.58rem;color:var(--gold-dim);letter-spacing:0.08em;text-transform:uppercase;margin-right:0.4rem;}
+    .btn {
+      background: white;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(180,120,150,0.18);
+      transition: transform 0.2s, box-shadow 0.2s, background 0.4s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(180,120,150,0.28); }
+    .btn:active { transform: scale(0.96); }
+    .btn.active { background: var(--accent); color: white; }
 
-.loading-st{text-align:center;padding:4rem 2rem;color:rgba(248,240,220,0.32);}
-.ld-cross{font-size:2rem;color:var(--gold-dim);animation:ldpulse 1.5s ease-in-out infinite;margin-bottom:0.8rem;}
-@keyframes ldpulse{0%,100%{opacity:0.4;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
-.err-st{text-align:center;padding:4rem 2rem;color:rgba(248,240,220,0.42);}
-.retry-btn{background:rgba(212,175,55,0.1);border:1px solid var(--gold-dim);color:var(--gold);padding:0.5rem 1.2rem;font-family:'Cinzel',serif;font-size:0.72rem;cursor:pointer;border-radius:3px;margin-top:0.8rem;letter-spacing:0.1em;}
-.nav-arrows{display:flex;gap:0.7rem;margin-top:2.2rem;padding-top:1.3rem;border-top:1px solid rgba(212,175,55,0.1);justify-content:space-between;}
-.arr-btn{background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.16);color:var(--gold);padding:0.52rem 1rem;font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;cursor:pointer;border-radius:3px;transition:all 0.2s;}
-.arr-btn:hover{background:rgba(212,175,55,0.15)}.arr-btn:disabled{opacity:0.22;cursor:default}
+    /* Brightness slider */
+    .slider-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .slider-label { font-size: 12px; color: var(--text); font-weight: 600; opacity: 0.7; letter-spacing: 0.05em; text-transform: uppercase; }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 180px;
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(to right, var(--warm), var(--accent));
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 10px rgba(180,100,130,0.3);
+      transition: transform 0.2s;
+    }
+    input[type=range]::-webkit-slider-thumb:active { transform: scale(1.2); }
 
-/* TTS Provider Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn 0.2s;}
-.modal{background:var(--dark2);border:1px solid rgba(212,175,55,0.25);border-radius:10px;padding:2rem;max-width:460px;width:90%;}
-.modal-title{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold);margin-bottom:0.5rem;letter-spacing:0.1em;}
-.modal-sub{font-size:0.9rem;color:rgba(248,240,220,0.5);margin-bottom:1.5rem;line-height:1.6;}
-.modal-opt{background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);border-radius:6px;padding:1rem;margin-bottom:0.7rem;cursor:pointer;transition:all 0.2s;}
-.modal-opt:hover{border-color:rgba(212,175,55,0.4);background:rgba(212,175,55,0.08);}
-.modal-opt.selected{border-color:var(--gold);background:rgba(212,175,55,0.1);}
-.opt-title{font-family:'Cinzel',serif;font-size:0.85rem;color:var(--gold);letter-spacing:0.08em;}
-.opt-desc{font-size:0.82rem;color:rgba(248,240,220,0.45);margin-top:0.2rem;}
-.opt-badge{display:inline-block;background:rgba(212,175,55,0.15);color:var(--gold);font-family:'Cinzel',serif;font-size:0.6rem;padding:0.15rem 0.5rem;border-radius:10px;margin-left:0.4rem;letter-spacing:0.05em;}
-.opt-badge.premium{background:rgba(125,211,252,0.12);color:#7dd3fc;}
-.modal-input{width:100%;background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.2);color:var(--cream);padding:0.55rem 0.8rem;font-family:'Crimson Text',serif;font-size:0.95rem;border-radius:4px;margin-top:0.5rem;}
-.modal-input:focus{outline:none;border-color:var(--gold)}.modal-input::placeholder{color:rgba(248,240,220,0.25)}
-.modal-btns{display:flex;gap:0.6rem;margin-top:1.3rem;justify-content:flex-end;}
-.modal-btn{background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.25);color:var(--gold);padding:0.5rem 1.2rem;font-family:'Cinzel',serif;font-size:0.72rem;cursor:pointer;border-radius:4px;letter-spacing:0.08em;transition:all 0.2s;}
-.modal-btn:hover{background:rgba(212,175,55,0.2)}.modal-btn.primary{background:var(--gold);color:var(--dark);}
-.modal-btn.primary:hover{background:var(--gold2);}
+    /* Color dots */
+    .colors {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .color-dot {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: transform 0.2s, border-color 0.2s;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    }
+    .color-dot:hover { transform: scale(1.15); }
+    .color-dot.selected { border-color: white; transform: scale(1.2); }
 
-/* ═══════════════════════════════════════
-   CALENDAR
-═══════════════════════════════════════ */
-.cal-page{padding:1.8rem 2.2rem;max-width:1050px;margin:0 auto;}
-.pg-ttl{font-family:'Cinzel',serif;font-size:1.65rem;color:var(--gold);letter-spacing:0.12em;margin-bottom:0.3rem;}
-.pg-intro{font-family:'IM Fell English',serif;font-style:italic;color:rgba(248,240,220,0.38);margin-bottom:1.6rem;}
-.cal-layout{display:grid;grid-template-columns:295px 1fr;gap:1.6rem;}
-.mini-cal{background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.12);border-radius:8px;padding:1rem;}
-.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem;}
-.cal-nav-btn{background:none;border:none;color:var(--gold);font-size:1.15rem;cursor:pointer;opacity:0.62;padding:0.2rem 0.45rem;transition:opacity 0.2s;}.cal-nav-btn:hover{opacity:1}
-.cal-my{font-family:'Cinzel',serif;font-size:0.82rem;color:var(--gold);letter-spacing:0.1em;text-align:center;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
-.cdh{font-family:'Cinzel',serif;font-size:0.56rem;text-align:center;color:rgba(212,175,55,0.42);padding:0.18rem;letter-spacing:0.04em;}
-.cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:0.8rem;border-radius:50%;cursor:pointer;transition:all 0.15s;color:rgba(248,240,220,0.52);position:relative;}
-.cd:hover{background:rgba(212,175,55,0.14);color:var(--cream)}.cd.today{background:rgba(212,175,55,0.13);color:var(--gold2);font-weight:600}.cd.selected{background:var(--gold);color:var(--dark);font-weight:700}.cd.has-saint::after{content:'';position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:3px;height:3px;background:var(--gold);border-radius:50%;opacity:0.5}.cd.empty{cursor:default}
-.saints-panel{background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.12);border-radius:8px;padding:1.2rem;}
-.saints-dh{font-family:'Cinzel',serif;font-size:0.95rem;color:var(--gold);letter-spacing:0.1em;margin-bottom:0.85rem;padding-bottom:0.65rem;border-bottom:1px solid rgba(212,175,55,0.12);}
-.saint-card{background:rgba(212,175,55,0.03);border:1px solid rgba(212,175,55,0.08);border-radius:5px;padding:0.85rem 1rem;margin-bottom:0.65rem;transition:all 0.2s;}
-.saint-card:hover{border-color:rgba(212,175,55,0.25);background:rgba(212,175,55,0.07)}
-.saint-name{font-family:'Cinzel',serif;font-size:0.92rem;color:var(--gold2);margin-bottom:0.22rem;}
-.saint-desc{font-size:0.88rem;color:rgba(248,240,220,0.52);line-height:1.52;margin-bottom:0.55rem;}
-.saint-link{display:inline-flex;align-items:center;gap:0.32rem;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.2);color:var(--gold);padding:0.26rem 0.7rem;border-radius:3px;font-family:'Cinzel',serif;font-size:0.63rem;letter-spacing:0.07em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
-.saint-link:hover{background:rgba(212,175,55,0.18)}
-.no-saints{text-align:center;padding:2rem;color:rgba(248,240,220,0.22);font-style:italic;}
+    /* Title */
+    .title { font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; transition: color 1s; }
+    .subtitle { font-size: 13px; color: var(--text); opacity: 0.55; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 28px; }
 
-/* ═══════════════════════════════════════
-   SEARCH
-═══════════════════════════════════════ */
-.srch-page{max-width:760px;margin:0 auto;padding:2.2rem 1.8rem;}
-.srch-bar{position:relative;margin-bottom:1.8rem;}
-.srch-input{width:100%;background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.2);border-radius:5px;color:var(--cream);padding:0.82rem 3rem 0.82rem 1.05rem;font-family:'Crimson Text',serif;font-size:1.05rem;transition:border-color 0.2s;}
-.srch-input:focus{outline:none;border-color:var(--gold)}.srch-input::placeholder{color:rgba(248,240,220,0.26)}
-.srch-ico{position:absolute;right:1rem;top:50%;transform:translateY(-50%);color:var(--gold-dim);pointer-events:none;}
-.sr{border-left:2px solid var(--gold-dim);padding:0.72rem 0.9rem;margin-bottom:0.65rem;background:rgba(212,175,55,0.03);cursor:pointer;transition:all 0.2s;border-radius:0 4px 4px 0;}
-.sr:hover{background:rgba(212,175,55,0.08);border-left-color:var(--gold)}
-.sr-ref{font-family:'Cinzel',serif;font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;margin-bottom:0.22rem;}
-.sr-txt{font-size:0.94rem;color:rgba(248,240,220,0.62);line-height:1.52;}
-.sr-hl{color:var(--gold2);background:rgba(212,175,55,0.12);border-radius:2px;padding:0 2px;}
-.srch-empty{text-align:center;padding:3rem;color:rgba(248,240,220,0.25);font-style:italic;font-size:1rem;}
+    /* Timer badge */
+    .timer-badge {
+      position: absolute;
+      top: -14px; right: -14px;
+      background: var(--accent);
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 999px;
+      padding: 4px 10px;
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+    .timer-badge.show { opacity: 1; transform: scale(1); }
 
-/* Toast */
-.toast{position:fixed;bottom:calc(var(--ad-h-banner) + 1rem);left:50%;transform:translateX(-50%) translateY(100px);background:rgba(28,18,6,0.97);border:1px solid rgba(212,175,55,0.32);color:var(--gold);padding:0.62rem 1.2rem;border-radius:4px;font-family:'Cinzel',serif;font-size:0.72rem;letter-spacing:0.05em;z-index:999;transition:transform 0.4s ease;}
-.toast.show{transform:translateX(-50%) translateY(0)}
-
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--dark)}::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:3px}
-
-@media(max-width:850px){.bible-layout{grid-template-columns:1fr}.sidebar{position:relative;top:0;max-height:200px}.cal-layout{grid-template-columns:1fr}.nav-center{display:none}}
-@media(max-width:580px){.reading-area{padding:1.4rem 1rem}.home-cards{gap:0.65rem}.home-card{width:130px;padding:0.9rem}}
-
-/* ── Botón circular No-Ads ── */
-.no-ads-btn {
-  background: none; border: none; padding: 0;
-  width: 32px; height: 32px; cursor: pointer;
-  transition: transform 0.2s, filter 0.2s;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; filter: drop-shadow(0 0 4px rgba(239,68,68,0.3));
-}
-.no-ads-btn:hover { transform: scale(1.15); filter: drop-shadow(0 0 7px rgba(239,68,68,0.6)); }
-.no-ads-btn svg { width: 28px; height: 28px; }
-.no-ads-btn.premium-active { filter: drop-shadow(0 0 5px rgba(212,175,55,0.5)); }
-
-/* ═══════════════════════════════════════
-   BOTÓN PRO + MODAL PRO
-═══════════════════════════════════════ */
-
-/* PRO Modal */
-@keyframes proSlideIn {
-  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
-  to   { opacity: 1; transform: none; }
-}
-.pro-header-left { display: flex; align-items: center; gap: 0.5rem; }
-.pro-header-title {
-  font-family: 'Cinzel', serif; font-size: 0.82rem;
-  color: var(--gold); letter-spacing: 0.18em; font-weight: 700;
-}
-.pro-close {
-  background: none; border: none; color: rgba(212,175,55,0.35);
-  font-size: 1rem; cursor: pointer; padding: 0.2rem 0.4rem;
-  transition: color 0.2s; border-radius: 3px;
-}
-.pro-close:hover { color: var(--gold); background: rgba(212,175,55,0.08); }
-
-/* Tabs */
-.pro-tabs {
-  display: flex; border-bottom: 1px solid rgba(212,175,55,0.1);
-}
-.pro-tab {
-  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
-  color: rgba(248,240,220,0.4); font-family: 'Cinzel', serif;
-  font-size: 0.68rem; letter-spacing: 0.08em; padding: 0.7rem 0.5rem;
-  cursor: pointer; transition: all 0.2s; display: flex;
-  align-items: center; justify-content: center; gap: 0.3rem;
-}
-.pro-tab:hover { color: var(--gold); }
-.pro-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-
-/* Tab content */
-.pro-tab-content { display: none; padding: 1.1rem; }
-.pro-tab-content.active { display: block; }
-
-.pro-section-desc {
-  font-size: 0.85rem; color: rgba(248,240,220,0.42);
-  line-height: 1.55; margin-bottom: 0.9rem;
-}
-
-/* Voice options */
-.pro-opt {
-  background: rgba(212,175,55,0.03); border: 1px solid rgba(212,175,55,0.1);
-  border-radius: 7px; padding: 0.85rem 1rem; margin-bottom: 0.6rem;
-  cursor: pointer; transition: all 0.2s;
-}
-.pro-opt:hover { border-color: rgba(212,175,55,0.3); background: rgba(212,175,55,0.06); }
-.pro-opt.selected { border-color: var(--gold); background: rgba(212,175,55,0.09); }
-.pro-opt-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem; }
-.pro-opt-title { font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--gold2); letter-spacing: 0.05em; }
-.pro-opt-badge {
-  font-family: 'Cinzel', serif; font-size: 0.55rem; letter-spacing: 0.08em;
-  padding: 0.15rem 0.5rem; border-radius: 10px;
-}
-.pro-opt-badge.free { background: rgba(134,239,172,0.12); color: #86efac; }
-.pro-opt-badge.prem { background: rgba(212,175,55,0.12); color: var(--gold); }
-.pro-opt-desc { font-size: 0.8rem; color: rgba(248,240,220,0.42); line-height: 1.5; }
-.pro-opt-sub { font-size: 0.76rem; color: rgba(212,175,55,0.5); margin-top: 0.25rem; }
-
-.pro-actions { margin-top: 0.8rem; display: flex; justify-content: flex-end; }
-.pro-save-btn {
-  background: var(--gold); color: var(--dark); border: none;
-  padding: 0.5rem 1.2rem; border-radius: 5px; font-family: 'Cinzel', serif;
-  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
-  cursor: pointer; transition: all 0.2s;
-}
-.pro-save-btn:hover { background: var(--gold2); }
-
-/* Purchase block */
-.pro-purchase-block { text-align: center; }
-.pro-star { font-size: 1.8rem; color: rgba(212,175,55,0.4); margin-bottom: 0.6rem; }
-.pro-purchase-title {
-  font-family: 'Cinzel', serif; font-size: 1rem; color: var(--gold);
-  letter-spacing: 0.12em; margin-bottom: 0.4rem;
-}
-.pro-purchase-sub { font-size: 0.85rem; color: rgba(248,240,220,0.42); line-height: 1.55; margin-bottom: 1rem; }
-.pro-features { text-align: left; margin-bottom: 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; }
-.pro-feat { font-size: 0.82rem; color: rgba(248,240,220,0.6); display: flex; align-items: center; gap: 0.5rem; }
-.pro-feat::before { content: ''; }
-.pro-price-box {
-  background: rgba(212,175,55,0.07); border: 1px solid rgba(212,175,55,0.2);
-  border-radius: 8px; padding: 0.8rem; margin-bottom: 0.9rem;
-  display: flex; align-items: baseline; justify-content: center; gap: 0.6rem;
-}
-.pro-price { font-family: 'Cinzel', serif; font-size: 2rem; color: var(--gold2); font-weight: 700; }
-.pro-price-label { font-family: 'Cinzel', serif; font-size: 0.6rem; color: rgba(212,175,55,0.45); letter-spacing: 0.1em; }
-.pro-buy-btn {
-  width: 100%; background: var(--gold); color: var(--dark); border: none;
-  padding: 0.8rem; border-radius: 6px; font-family: 'Cinzel', serif;
-  font-size: 0.85rem; font-weight: 700; letter-spacing: 0.1em;
-  cursor: pointer; transition: all 0.2s; margin-bottom: 0.55rem;
-}
-.pro-buy-btn:hover { background: var(--gold2); transform: translateY(-1px); box-shadow: 0 5px 18px rgba(212,175,55,0.25); }
-.pro-restore-btn {
-  background: none; border: none; color: rgba(212,175,55,0.35);
-  font-family: 'Cinzel', serif; font-size: 0.62rem; letter-spacing: 0.06em;
-  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
-  transition: color 0.2s;
-}
-.pro-restore-btn:hover { color: var(--gold); }
-.pro-active-block { text-align: center; padding: 1rem 0; }
-.pro-active-block.hidden { display: none; }
-
-</style>
+    /* Tap hint */
+    .tap-hint {
+      font-size: 11px;
+      color: var(--text);
+      opacity: 0.4;
+      margin-top: 12px;
+      font-weight: 600;
+      animation: hintPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes hintPulse { 0%,100%{opacity:0.4} 50%{opacity:0.7} }
+  </style>
 </head>
-<body>
+<body id="body">
 
-<!-- BG ART SVG (sin copyright, creados aquí) -->
-<div class="bg-art">
-  <svg style="top:3%;right:-8%;width:45vw;height:45vw;opacity:0.042;animation:slowRot 130s linear infinite" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g stroke="#D4AF37" stroke-width="1.3">
-      <rect x="104" y="20" width="32" height="200"/><rect x="20" y="90" width="200" height="32"/>
-      <rect x="50" y="188" width="140" height="5"/><rect x="70" y="178" width="100" height="3" opacity="0.6"/>
-      <circle cx="120" cy="120" r="35" stroke-dasharray="8 5"/>
-      <circle cx="120" cy="120" r="60" stroke-dasharray="5 10" opacity="0.6"/>
-      <circle cx="120" cy="120" r="90" stroke-dasharray="3 14" opacity="0.35"/>
-      <polygon points="120,14 124,22 116,22" fill="#D4AF37" opacity="0.8"/>
-    </g>
-  </svg>
-  <svg style="bottom:8%;left:-6%;width:38vw;height:38vw;opacity:0.03;animation:drift 18s ease-in-out infinite" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g stroke="#D4AF37" stroke-width="1.1">
-      <path d="M110,110 Q85,75 50,88 Q28,96 34,112 Q40,130 65,122 Q85,116 110,110Z"/>
-      <path d="M110,110 Q138,78 162,92 Q180,101 172,116 Q164,132 143,124 Q122,117 110,110Z"/>
-      <ellipse cx="110" cy="104" rx="22" ry="28" transform="rotate(-18 110 104)"/>
-      <path d="M110,110 L110,155 Q104,172 92,178" stroke-linecap="round"/>
-      <path d="M110,155 Q116,172 128,178" stroke-linecap="round"/>
-      <circle cx="97" cy="92" r="3.5" fill="#D4AF37" opacity="0.8"/>
-      <line x1="110" y1="40" x2="110" y2="8" opacity="0.4"/><circle cx="110" cy="6" r="4" fill="#D4AF37" opacity="0.4"/>
-    </g>
-  </svg>
-  <svg style="top:35%;left:28%;width:42vw;height:42vw;opacity:0.02;animation:drift 25s ease-in-out infinite reverse" viewBox="0 0 220 220" fill="none">
-    <g stroke="#D4AF37" stroke-width="1">
-      <ellipse cx="110" cy="110" rx="45" ry="90"/><ellipse cx="110" cy="110" rx="90" ry="45"/>
-      <circle cx="110" cy="110" r="95" stroke-dasharray="7 7" opacity="0.5"/>
-      <circle cx="110" cy="110" r="75" stroke-dasharray="4 10" opacity="0.35"/>
-    </g>
-  </svg>
-  <svg style="inset:0;width:100%;height:100%;opacity:1" viewBox="0 0 100 100" preserveAspectRatio="none">
-    <defs>
-      <radialGradient id="g1" cx="20%" cy="20%" r="50%"><stop offset="0%" stop-color="#D4AF37" stop-opacity="0.06"/><stop offset="100%" stop-color="#D4AF37" stop-opacity="0"/></radialGradient>
-      <radialGradient id="g2" cx="80%" cy="80%" r="50%"><stop offset="0%" stop-color="#8B1A1A" stop-opacity="0.05"/><stop offset="100%" stop-color="#8B1A1A" stop-opacity="0"/></radialGradient>
-    </defs>
-    <rect width="100" height="100" fill="url(#g1)"/><rect width="100" height="100" fill="url(#g2)"/>
-  </svg>
-</div>
+  <!-- Brightness overlay: black layer on top, opacity = 1 - brightness -->
+  <div id="brightnessOverlay" style="
+    position:fixed; inset:0; background:#000;
+    opacity:0; pointer-events:none;
+    transition: opacity 0.4s ease; z-index:999;
+  "></div>
 
-<!-- NAV -->
-<nav>
-  <div class="logo">
-    <svg width="20" height="20" viewBox="0 0 22 22" fill="none"><rect x="9" y="1" width="4" height="20" fill="#D4AF37"/><rect x="1" y="7" width="20" height="4" fill="#D4AF37"/><rect x="3" y="18" width="16" height="2" fill="#D4AF37" opacity="0.6"/></svg>
-    VERBUM
-  </div>
-  <div class="nav-center" id="navCenter">
-    <button class="nav-btn active" onclick="showPage('home')">Inicio</button>
-    <button class="nav-btn" onclick="showPage('bible')">La Biblia</button>
-    <button class="nav-btn" onclick="showPage('calendar')">Santoral</button>
-    <button class="nav-btn" onclick="showPage('search')">Buscar</button>
-  </div>
-  <div class="nav-right">
-    <select class="lang-sel" id="langSel" onchange="changeLang(this.value)">
-      <option value="es" selected>🇪🇸 Español</option>
-      <option value="en">🇬🇧 English</option>
-      <option value="pt">🇵🇹 Português</option>
-      <option value="fr">🇫🇷 Français</option>
-      <option value="de">🇩🇪 Deutsch</option>
-      <option value="it">🇮🇹 Italiano</option>
-      <option value="la">🏛 Latina</option>
-    </select>
-  </div>
-</nav>
+  <!-- Screen boost: white layer with screen blend — pushes perceived brightness past device limit -->
+  <div id="screenBoost" style="
+    position:fixed; inset:0; background:#fff;
+    mix-blend-mode:screen;
+    opacity:0; pointer-events:none;
+    transition: opacity 0.4s ease; z-index:998;
+  "></div>
 
-<main>
+  <!-- Floating particles container -->
+  <div id="particles"></div>
 
-<!-- HOME -->
-<div class="page active" id="page-home">
-<div class="home">
-  <svg width="190" height="68" viewBox="0 0 200 70" fill="none" style="margin-bottom:1.4rem">
-    <line x1="0" y1="35" x2="70" y2="35" stroke="#D4AF37" stroke-width="0.8" opacity="0.38"/>
-    <line x1="130" y1="35" x2="200" y2="35" stroke="#D4AF37" stroke-width="0.8" opacity="0.38"/>
-    <path d="M93,8 L100,35 L107,8" stroke="#D4AF37" stroke-width="1.3" fill="none"/>
-    <rect x="90" y="31" width="20" height="26" stroke="#D4AF37" stroke-width="1.3" fill="none"/>
-    <circle cx="100" cy="35" r="18" stroke="#D4AF37" stroke-width="0.7" stroke-dasharray="5 5" opacity="0.42"/>
-    <polygon points="100,4 103,10 97,10" fill="#D4AF37" opacity="0.78"/>
-  </svg>
-  <h1>VERBUM<br><span style="font-size:0.4em;letter-spacing:0.25em;font-style:italic;font-family:'IM Fell English',serif;font-weight:400" id="hSub">La Santa Biblia</span></h1>
-  <p class="home-sub" id="hSubLine">Palabra de Dios · Dominio Público</p>
-  <blockquote class="home-verse">
-    <span id="hVerse">"Tu palabra es una lámpara a mis pies, y una lumbrera a mi camino."</span>
-    <cite id="hVerseRef">— Salmos 119:105</cite>
-  </blockquote>
-  <div class="home-cards">
-    <div class="home-card" onclick="showPage('bible')"><div class="hc-icon">📖</div><div class="hc-ttl" id="hc1">Leer</div><div class="hc-dsc" id="hc1d">Todos los libros</div></div>
-    <div class="home-card" onclick="showPage('bible');setTimeout(startAudio,900)"><div class="hc-icon">🎧</div><div class="hc-ttl" id="hc2">Escuchar</div><div class="hc-dsc" id="hc2d">Voz realista</div></div>
-    <div class="home-card" onclick="showPage('calendar')"><div class="hc-icon">🕊</div><div class="hc-ttl" id="hc3">Santoral</div><div class="hc-dsc" id="hc3d">Santos del día</div></div>
-    <div class="home-card" onclick="showPage('search')"><div class="hc-icon">✦</div><div class="hc-ttl" id="hc4">Buscar</div><div class="hc-dsc" id="hc4d">Versículos</div></div>
-  </div>
-  <p id="hLicense" style="margin-top:2rem;font-size:0.72rem;color:rgba(248,240,220,0.18);font-family:'Cinzel',serif;letter-spacing:0.07em;line-height:1.6">
-    Reina Valera 1909 · World English Bible · Sin derechos de autor
-  </p>
-</div>
-</div>
+  <p class="title">Lunita</p>
+  <p class="subtitle">luz nocturna · baby night light</p>
 
-<!-- BIBLE -->
-<div class="page" id="page-bible">
-<div class="bible-layout">
-  <aside class="sidebar">
-    <div class="sb-hdr">
-      <input type="text" class="sb-search" id="bookSrch" placeholder="Buscar libro..." oninput="filterBooks(this.value)">
+  <!-- MOON -->
+  <div class="moon-wrap" id="moonWrap" onclick="toggleLight()">
+    <div class="moon-glow" id="moonGlow"></div>
+
+    <!-- Decorative stars -->
+    <div class="star" style="top:10px;right:50px;--dx:4px;--dy:-6px;animation-duration:3.2s,2.1s;">
+      <svg width="30" height="30" viewBox="0 0 30 30"><polygon points="15,3 18,11 27,11 20,17 22,25 15,20 8,25 10,17 3,11 12,11" fill="#ffd580" opacity="0.95"/></svg>
     </div>
-    <div id="bookList"></div>
-  </aside>
-  <div class="reading-area">
-    <div class="reading-top">
-      <div>
-        <h2 class="reading-title" id="rdTitle">Génesis 1</h2>
-        <p class="reading-sub" id="rdSub">Antiguo Testamento · Reina Valera 1909</p>
-      </div>
-      <div class="audio-ctrls">
-        <select class="voice-sel" id="voiceSel" title="Seleccionar voz"></select>
-        <button class="ctrl-btn" id="playBtn" onclick="toggleAudio()" title="Reproducir/Pausar">▶</button>
-        <button class="ctrl-btn" onclick="stopAudio()" title="Detener">⏹</button>
-        <button class="spd-btn" onclick="cycleSpeed()" id="spdBtn">1×</button>
+    <div class="star" style="top:60px;right:10px;--dx:-3px;--dy:5px;animation-duration:4s,1.8s;">
+      <svg width="20" height="20" viewBox="0 0 30 30"><polygon points="15,3 18,11 27,11 20,17 22,25 15,20 8,25 10,17 3,11 12,11" fill="#ffd580" opacity="0.8"/></svg>
+    </div>
+    <div class="star" style="top:2px;left:40px;--dx:2px;--dy:4px;animation-duration:2.8s,2.5s;">
+      <svg width="14" height="14" viewBox="0 0 30 30"><polygon points="15,3 18,11 27,11 20,17 22,25 15,20 8,25 10,17 3,11 12,11" fill="#ffd580" opacity="0.7"/></svg>
+    </div>
+
+    <!-- Timer badge -->
+    <div class="timer-badge" id="timerBadge">⏱</div>
+
+    <!-- Moon SVG -->
+    <svg class="moon-svg" id="moonSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="moonGrad" cx="35%" cy="35%" r="65%">
+          <stop offset="0%"   stop-color="#ffffff"/>
+          <stop offset="60%"  stop-color="#fff8f5"/>
+          <stop offset="100%" stop-color="#ffe8d8"/>
+        </radialGradient>
+        <radialGradient id="glowInner" cx="50%" cy="80%" r="60%">
+          <stop offset="0%"   stop-color="#ffdd99" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#fff8f5" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="soft">
+          <feGaussianBlur stdDeviation="1.5"/>
+        </filter>
+      </defs>
+
+      <!-- Crescent shape via path -->
+      <path id="moonPath"
+        d="M100,15
+           A85,85 0 1,1 100,185
+           A55,60 0 1,0 100,15 Z"
+        fill="url(#moonGrad)"
+        stroke="none"/>
+
+      <!-- Inner warm glow -->
+      <path
+        d="M100,15
+           A85,85 0 1,1 100,185
+           A55,60 0 1,0 100,15 Z"
+        fill="url(#glowInner)"/>
+
+      <!-- Face -->
+      <g class="face" id="moonFace">
+        <!-- Left eye -->
+        <circle cx="75" cy="105" r="5" fill="#c07080" opacity="0.9"/>
+        <!-- Right eye -->
+        <circle cx="100" cy="102" r="5" fill="#c07080" opacity="0.9"/>
+        <!-- Smile -->
+        <path d="M72,118 Q87,130 103,118" stroke="#c07080" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- Blush left -->
+        <ellipse cx="64" cy="116" rx="7" ry="4" fill="#e8a0b0" opacity="0.4"/>
+        <!-- Blush right -->
+        <ellipse cx="110" cy="113" rx="7" ry="4" fill="#e8a0b0" opacity="0.4"/>
+      </g>
+
+      <!-- Shine spot -->
+      <ellipse cx="68" cy="45" rx="14" ry="8" fill="white" opacity="0.5" transform="rotate(-20,68,45)"/>
+    </svg>
+  </div>
+
+  <p class="tap-hint" id="tapHint">toca la luna para encender ✨</p>
+
+  <!-- CONTROLS -->
+  <div class="controls" id="controls" style="opacity:0.4;pointer-events:none;transition:opacity 0.5s;">
+
+    <!-- Color presets -->
+    <div style="width:100%;display:flex;justify-content:center;">
+      <div class="colors" id="colorPicker">
+        <div class="color-dot selected" style="background:#ffdd99;" data-warm="#ffdd99" data-bg="#f5e6f0" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#b0e0ff;" data-warm="#b0e0ff" data-bg="#e0f0ff" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#b8f0c0;" data-warm="#b8f0c0" data-bg="#e0f5e8" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#ffb0d0;" data-warm="#ffb0d0" data-bg="#f5e0ec" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#d0b0ff;" data-warm="#d0b0ff" data-bg="#ede0f5" onclick="setColor(this)"></div>
       </div>
     </div>
 
-    <!-- Translation status bar -->
-    <div class="trans-bar" id="transBar" style="display:none">
-      <span class="trans-label" id="transLabel">Traduciendo</span>
-      <span class="trans-indicator" id="transIndicator">
-        <span class="trans-dot"></span>
-        <span id="transText">Traduciendo al español...</span>
-      </span>
-      <span class="trans-badge" id="transBadge">Traducción IA · Claude</span>
+    <!-- Brightness -->
+    <div class="slider-wrap" style="width:100%;">
+      <span class="slider-label">Brillo</span>
+      <input type="range" min="10" max="100" value="80" id="brightnessSlider" oninput="setBrightness(this.value)" />
     </div>
 
-    <div class="div-orn">✦ ✦ ✦</div>
-    <div id="verseContainer"><div class="loading-st"><div class="ld-cross">✝</div><p>Cargando...</p></div></div>
+    <!-- Timer buttons -->
+    <button class="btn" onclick="setTimer(15)">15 min</button>
+    <button class="btn" onclick="setTimer(30)">30 min</button>
+    <button class="btn" onclick="setTimer(60)">1 hora</button>
+    <button class="btn" onclick="setTimer(0)">∞</button>
 
-    <!-- AdMob Rectangle (entre capítulo y botones nav) -->
-    <!-- AdMob rectangle slot (ID: adSlot1) — activar con Ad Unit ID real -->
-    </ins>
-      <!-- ANDROID: este slot se reemplaza por AdMob banner 320x50 o rectangle 300x250 -->
-    </div>
 
-    <div class="nav-arrows">
-      <button class="arr-btn" id="prevBtn" onclick="changeChapter(-1)">← Anterior</button>
-      <button class="arr-btn" id="nextBtn" onclick="changeChapter(1)">Siguiente →</button>
-    </div>
   </div>
-</div>
-</div>
 
-<!-- CALENDAR -->
-<div class="page" id="page-calendar">
-<div class="cal-page">
-  <h2 class="pg-ttl" id="calTtl">✝ Santoral</h2>
-  <p class="pg-intro" id="calIntro">Santos del día y su relación con las Escrituras</p>
-  <div class="cal-layout">
-    <div>
-      <div class="mini-cal">
-        <div class="cal-nav">
-          <button class="cal-nav-btn" onclick="chMonth(-1)">‹</button>
-          <div class="cal-my" id="calMY"></div>
-          <button class="cal-nav-btn" onclick="chMonth(1)">›</button>
-        </div>
-        <div class="cal-grid" id="calGrid"></div>
-      </div>
-      <!-- AdMob en calendario -->
-      <div class="ad-interstitial-slot" style="margin-top:1rem;min-height:60px;">
-        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;opacity:0.15;font-family:serif;font-size:0.7rem;letter-spacing:0.1em">ESPACIO PUBLICITARIO</div></ins>
-      </div>
-    </div>
-    <div class="saints-panel">
-      <div class="saints-dh" id="saintsDH">Santos de hoy</div>
-      <div id="saintsList"></div>
-    </div>
-  </div>
-</div>
-</div>
+  <script>
+    // ─── STATE ───────────────────────────────
+    let isOn = false;
+    let brightness = 80;
+    let currentWarm = '#ffdd99';
+    let timerInterval = null;
+    let timerSeconds = 0;
+    let darkMode = true;
 
-<!-- SEARCH -->
-<div class="page" id="page-search">
-<div class="srch-page">
-  <h2 class="pg-ttl" id="srchTtl">✦ Buscar en las Escrituras</h2>
-  <p class="pg-intro" id="srchIntro">Busca palabras o frases en la Biblia</p>
-  <div class="srch-bar">
-    <input type="text" class="srch-input" id="srchInput" placeholder="Ej: amor, fe, luz del mundo..." oninput="doSearch(this.value)">
-    <span class="srch-ico">🔍</span>
-  </div>
-  <div id="srchResults"><div class="srch-empty" id="srchEmpty">Escribe para buscar en las Escrituras</div></div>
-</div>
-</div>
+    const body       = document.getElementById('body');
+    const controls   = document.getElementById('controls');
+    const moonGlow   = document.getElementById('moonGlow');
+    const moonPath   = document.getElementById('moonPath');
+    const tapHint    = document.getElementById('tapHint');
+    const timerBadge = document.getElementById('timerBadge');
 
-</main>
+    // ─── PARTICLES ───────────────────────────
+    const particleContainer = document.getElementById('particles');
+    function spawnParticle() {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = 4 + Math.random() * 8;
+      p.style.width  = size + 'px';
+      p.style.height = size + 'px';
+      p.style.left   = (10 + Math.random() * 80) + 'vw';
+      p.style.bottom = '-10px';
+      p.style.background = isOn ? currentWarm : 'transparent';
+      p.style.animationDuration = (6 + Math.random() * 8) + 's';
+      p.style.animationDelay    = Math.random() * 4 + 's';
+      particleContainer.appendChild(p);
+      setTimeout(() => p.remove(), 14000);
+    }
+    setInterval(() => { if (isOn) spawnParticle(); }, 800);
 
-<!-- AdMob Banner fijo inferior -->
-<!-- ANDROID: reemplazar todo este div con el AdView nativo de AdMob -->
-<div class="admob-banner" id="admobBanner">
-  <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;opacity:0.15;font-family:serif;font-size:0.7rem;letter-spacing:0.1em">ESPACIO PUBLICITARIO</div></ins>
-  <!-- Fallback mientras no hay anuncio cargado -->
-  <span class="ad-placeholder" id="adPlaceholder">✦ VERBUM — La Biblia Sagrada ✦</span>
-</div>
+    // ─── TOGGLE LIGHT ────────────────────────
+    function toggleLight() {
+      isOn = !isOn;
+      applyLight();
+    }
 
+    function applyLight() {
+      const t = isOn ? (brightness / 100) : 0; // 0..1
+      const overlay = document.getElementById('brightnessOverlay');
 
-<div class="toast" id="toast"></div>
+      // Overlay: at brightness=0 → nearly black (0.92), at brightness=100 → gone (0)
+      overlay.style.opacity = isOn ? (1 - t) * 0.92 : 0;
 
-<script>
-// ══════════════════════════════════════════════════════════
-//  BOOKS DATA (66 libros canónicos protestantes/evangélicos)
-// ══════════════════════════════════════════════════════════
-const OT=[
-  {id:'genesis',es:'Génesis',en:'Genesis',pt:'Gênesis',fr:'Genèse',de:'Genesis',it:'Genesi',la:'Genesis',ch:50,ae:'genesis',an:'genesis'},
-  {id:'exodus',es:'Éxodo',en:'Exodus',pt:'Êxodo',fr:'Exode',de:'Exodus',it:'Esodo',la:'Exodus',ch:40,ae:'exodo',an:'exodus'},
-  {id:'leviticus',es:'Levítico',en:'Leviticus',pt:'Levítico',fr:'Lévitique',de:'Levitikus',it:'Levitico',la:'Leviticus',ch:27,ae:'levitico',an:'leviticus'},
-  {id:'numbers',es:'Números',en:'Numbers',pt:'Números',fr:'Nombres',de:'Numeri',it:'Numeri',la:'Numeri',ch:36,ae:'numeros',an:'numbers'},
-  {id:'deuteronomy',es:'Deuteronomio',en:'Deuteronomy',pt:'Deuteronômio',fr:'Deutéronome',de:'Deuteronomium',it:'Deuteronomio',la:'Deuteronomium',ch:34,ae:'deuteronomio',an:'deuteronomy'},
-  {id:'joshua',es:'Josué',en:'Joshua',pt:'Josué',fr:'Josué',de:'Josua',it:'Giosuè',la:'Iosua',ch:24,ae:'josue',an:'joshua'},
-  {id:'judges',es:'Jueces',en:'Judges',pt:'Juízes',fr:'Juges',de:'Richter',it:'Giudici',la:'Iudices',ch:21,ae:'jueces',an:'judges'},
-  {id:'ruth',es:'Rut',en:'Ruth',pt:'Rute',fr:'Ruth',de:'Rut',it:'Rut',la:'Ruth',ch:4,ae:'rut',an:'ruth'},
-  {id:'1samuel',es:'1 Samuel',en:'1 Samuel',pt:'1 Samuel',fr:'1 Samuel',de:'1 Samuel',it:'1 Samuele',la:'1 Samuel',ch:31,ae:'1+samuel',an:'1+samuel'},
-  {id:'2samuel',es:'2 Samuel',en:'2 Samuel',pt:'2 Samuel',fr:'2 Samuel',de:'2 Samuel',it:'2 Samuele',la:'2 Samuel',ch:24,ae:'2+samuel',an:'2+samuel'},
-  {id:'1kings',es:'1 Reyes',en:'1 Kings',pt:'1 Reis',fr:'1 Rois',de:'1 Könige',it:'1 Re',la:'1 Regum',ch:22,ae:'1+reyes',an:'1+kings'},
-  {id:'2kings',es:'2 Reyes',en:'2 Kings',pt:'2 Reis',fr:'2 Rois',de:'2 Könige',it:'2 Re',la:'2 Regum',ch:25,ae:'2+reyes',an:'2+kings'},
-  {id:'1chronicles',es:'1 Crónicas',en:'1 Chronicles',pt:'1 Crônicas',fr:'1 Chroniques',de:'1 Chronik',it:'1 Cronache',la:'1 Paralipomenon',ch:29,ae:'1+cronicas',an:'1+chronicles'},
-  {id:'2chronicles',es:'2 Crónicas',en:'2 Chronicles',pt:'2 Crônicas',fr:'2 Chroniques',de:'2 Chronik',it:'2 Cronache',la:'2 Paralipomenon',ch:36,ae:'2+cronicas',an:'2+chronicles'},
-  {id:'ezra',es:'Esdras',en:'Ezra',pt:'Esdras',fr:'Esdras',de:'Esra',it:'Esdra',la:'Esdras',ch:10,ae:'esdras',an:'ezra'},
-  {id:'nehemiah',es:'Nehemías',en:'Nehemiah',pt:'Neemias',fr:'Néhémie',de:'Nehemia',it:'Neemia',la:'Nehemias',ch:13,ae:'nehemias',an:'nehemiah'},
-  {id:'esther',es:'Ester',en:'Esther',pt:'Ester',fr:'Esther',de:'Ester',it:'Ester',la:'Esther',ch:10,ae:'ester',an:'esther'},
-  {id:'job',es:'Job',en:'Job',pt:'Jó',fr:'Job',de:'Hiob',it:'Giobbe',la:'Iob',ch:42,ae:'job',an:'job'},
-  {id:'psalms',es:'Salmos',en:'Psalms',pt:'Salmos',fr:'Psaumes',de:'Psalmen',it:'Salmi',la:'Psalmi',ch:150,ae:'salmos',an:'psalms'},
-  {id:'proverbs',es:'Proverbios',en:'Proverbs',pt:'Provérbios',fr:'Proverbes',de:'Sprüche',it:'Proverbi',la:'Proverbia',ch:31,ae:'proverbios',an:'proverbs'},
-  {id:'ecclesiastes',es:'Eclesiastés',en:'Ecclesiastes',pt:'Eclesiastes',fr:'Ecclésiaste',de:'Prediger',it:'Qohelet',la:'Ecclesiastes',ch:12,ae:'eclesiastes',an:'ecclesiastes'},
-  {id:'song',es:'Cantares',en:'Song of Solomon',pt:'Cantares',fr:'Cantique',de:'Hohelied',it:'Cantico',la:'Canticum',ch:8,ae:'cantares',an:'song+of+solomon'},
-  {id:'isaiah',es:'Isaías',en:'Isaiah',pt:'Isaías',fr:'Isaïe',de:'Jesaja',it:'Isaia',la:'Isaias',ch:66,ae:'isaias',an:'isaiah'},
-  {id:'jeremiah',es:'Jeremías',en:'Jeremiah',pt:'Jeremias',fr:'Jérémie',de:'Jeremia',it:'Geremia',la:'Hieremias',ch:52,ae:'jeremias',an:'jeremiah'},
-  {id:'lamentations',es:'Lamentaciones',en:'Lamentations',pt:'Lamentações',fr:'Lamentations',de:'Klagelieder',it:'Lamentazioni',la:'Lamentationes',ch:5,ae:'lamentaciones',an:'lamentations'},
-  {id:'ezekiel',es:'Ezequiel',en:'Ezekiel',pt:'Ezequiel',fr:'Ézéchiel',de:'Hesekiel',it:'Ezechiele',la:'Ezechiel',ch:48,ae:'ezequiel',an:'ezekiel'},
-  {id:'daniel',es:'Daniel',en:'Daniel',pt:'Daniel',fr:'Daniel',de:'Daniel',it:'Daniele',la:'Daniel',ch:12,ae:'daniel',an:'daniel'},
-  {id:'hosea',es:'Oseas',en:'Hosea',pt:'Oséias',fr:'Osée',de:'Hosea',it:'Osea',la:'Osee',ch:14,ae:'oseas',an:'hosea'},
-  {id:'joel',es:'Joel',en:'Joel',pt:'Joel',fr:'Joël',de:'Joel',it:'Gioele',la:'Ioel',ch:3,ae:'joel',an:'joel'},
-  {id:'amos',es:'Amós',en:'Amos',pt:'Amós',fr:'Amos',de:'Amos',it:'Amos',la:'Amos',ch:9,ae:'amos',an:'amos'},
-  {id:'obadiah',es:'Abdías',en:'Obadiah',pt:'Obadias',fr:'Abdias',de:'Obadja',it:'Abdia',la:'Abdias',ch:1,ae:'abdias',an:'obadiah'},
-  {id:'jonah',es:'Jonás',en:'Jonah',pt:'Jonas',fr:'Jonas',de:'Jona',it:'Giona',la:'Ionas',ch:4,ae:'jonas',an:'jonah'},
-  {id:'micah',es:'Miqueas',en:'Micah',pt:'Miquéias',fr:'Michée',de:'Micha',it:'Michea',la:'Micha',ch:7,ae:'miqueas',an:'micah'},
-  {id:'nahum',es:'Nahúm',en:'Nahum',pt:'Naum',fr:'Nahum',de:'Nahum',it:'Naum',la:'Nahum',ch:3,ae:'nahum',an:'nahum'},
-  {id:'habakkuk',es:'Habacuc',en:'Habakkuk',pt:'Habacuque',fr:'Habacuc',de:'Habakuk',it:'Abacuc',la:'Habacuc',ch:3,ae:'habacuc',an:'habakkuk'},
-  {id:'zephaniah',es:'Sofonías',en:'Zephaniah',pt:'Sofonias',fr:'Sophonie',de:'Zefanja',it:'Sofonia',la:'Sophonias',ch:3,ae:'sofonias',an:'zephaniah'},
-  {id:'haggai',es:'Hageo',en:'Haggai',pt:'Ageu',fr:'Aggée',de:'Haggai',it:'Aggeo',la:'Aggaeus',ch:2,ae:'hageo',an:'haggai'},
-  {id:'zechariah',es:'Zacarías',en:'Zechariah',pt:'Zacarias',fr:'Zacharie',de:'Sacharja',it:'Zaccaria',la:'Zacharias',ch:14,ae:'zacarias',an:'zechariah'},
-  {id:'malachi',es:'Malaquías',en:'Malachi',pt:'Malaquias',fr:'Malachie',de:'Maleachi',it:'Malachia',la:'Malachias',ch:4,ae:'malaquias',an:'malachi'},
-];
-const NT=[
-  {id:'matthew',es:'Mateo',en:'Matthew',pt:'Mateus',fr:'Matthieu',de:'Matthäus',it:'Matteo',la:'Matthaeus',ch:28,ae:'mateo',an:'matthew'},
-  {id:'mark',es:'Marcos',en:'Mark',pt:'Marcos',fr:'Marc',de:'Markus',it:'Marco',la:'Marcus',ch:16,ae:'marcos',an:'mark'},
-  {id:'luke',es:'Lucas',en:'Luke',pt:'Lucas',fr:'Luc',de:'Lukas',it:'Luca',la:'Lucas',ch:24,ae:'lucas',an:'luke'},
-  {id:'john',es:'Juan',en:'John',pt:'João',fr:'Jean',de:'Johannes',it:'Giovanni',la:'Ioannes',ch:21,ae:'juan',an:'john'},
-  {id:'acts',es:'Hechos',en:'Acts',pt:'Atos',fr:'Actes',de:'Apostelgeschichte',it:'Atti',la:'Actus',ch:28,ae:'hechos',an:'acts'},
-  {id:'romans',es:'Romanos',en:'Romans',pt:'Romanos',fr:'Romains',de:'Römer',it:'Romani',la:'Romani',ch:16,ae:'romanos',an:'romans'},
-  {id:'1corinthians',es:'1 Corintios',en:'1 Corinthians',pt:'1 Coríntios',fr:'1 Corinthiens',de:'1 Korinther',it:'1 Corinzi',la:'1 Corinthios',ch:16,ae:'1+corintios',an:'1+corinthians'},
-  {id:'2corinthians',es:'2 Corintios',en:'2 Corinthians',pt:'2 Coríntios',fr:'2 Corinthiens',de:'2 Korinther',it:'2 Corinzi',la:'2 Corinthios',ch:13,ae:'2+corintios',an:'2+corinthians'},
-  {id:'galatians',es:'Gálatas',en:'Galatians',pt:'Gálatas',fr:'Galates',de:'Galater',it:'Galati',la:'Galatae',ch:6,ae:'galatas',an:'galatians'},
-  {id:'ephesians',es:'Efesios',en:'Ephesians',pt:'Efésios',fr:'Éphésiens',de:'Epheser',it:'Efesini',la:'Ephesii',ch:6,ae:'efesios',an:'ephesians'},
-  {id:'philippians',es:'Filipenses',en:'Philippians',pt:'Filipenses',fr:'Philippiens',de:'Philipper',it:'Filippesi',la:'Philippenses',ch:4,ae:'filipenses',an:'philippians'},
-  {id:'colossians',es:'Colosenses',en:'Colossians',pt:'Colossenses',fr:'Colossiens',de:'Kolosser',it:'Colossesi',la:'Colossenses',ch:4,ae:'colosenses',an:'colossians'},
-  {id:'1thessalonians',es:'1 Tesalonicenses',en:'1 Thessalonians',pt:'1 Tessalonicenses',fr:'1 Thessaloniciens',de:'1 Thessalonicher',it:'1 Tessalonicesi',la:'1 Thessalonicenses',ch:5,ae:'1+tesalonicenses',an:'1+thessalonians'},
-  {id:'2thessalonians',es:'2 Tesalonicenses',en:'2 Thessalonians',pt:'2 Tessalonicenses',fr:'2 Thessaloniciens',de:'2 Thessalonicher',it:'2 Tessalonicesi',la:'2 Thessalonicenses',ch:3,ae:'2+tesalonicenses',an:'2+thessalonians'},
-  {id:'1timothy',es:'1 Timoteo',en:'1 Timothy',pt:'1 Timóteo',fr:'1 Timothée',de:'1 Timotheus',it:'1 Timoteo',la:'1 Timotheus',ch:6,ae:'1+timoteo',an:'1+timothy'},
-  {id:'2timothy',es:'2 Timoteo',en:'2 Timothy',pt:'2 Timóteo',fr:'2 Timothée',de:'2 Timotheus',it:'2 Timoteo',la:'2 Timotheus',ch:4,ae:'2+timoteo',an:'2+timothy'},
-  {id:'titus',es:'Tito',en:'Titus',pt:'Tito',fr:'Tite',de:'Titus',it:'Tito',la:'Titus',ch:3,ae:'tito',an:'titus'},
-  {id:'philemon',es:'Filemón',en:'Philemon',pt:'Filemom',fr:'Philémon',de:'Philemon',it:'Filemone',la:'Philemon',ch:1,ae:'filemon',an:'philemon'},
-  {id:'hebrews',es:'Hebreos',en:'Hebrews',pt:'Hebreus',fr:'Hébreux',de:'Hebräer',it:'Ebrei',la:'Hebraei',ch:13,ae:'hebreos',an:'hebrews'},
-  {id:'james',es:'Santiago',en:'James',pt:'Tiago',fr:'Jacques',de:'Jakobus',it:'Giacomo',la:'Iacobus',ch:5,ae:'santiago',an:'james'},
-  {id:'1peter',es:'1 Pedro',en:'1 Peter',pt:'1 Pedro',fr:'1 Pierre',de:'1 Petrus',it:'1 Pietro',la:'1 Petrus',ch:5,ae:'1+pedro',an:'1+peter'},
-  {id:'2peter',es:'2 Pedro',en:'2 Peter',pt:'2 Pedro',fr:'2 Pierre',de:'2 Petrus',it:'2 Pietro',la:'2 Petrus',ch:3,ae:'2+pedro',an:'2+peter'},
-  {id:'1john',es:'1 Juan',en:'1 John',pt:'1 João',fr:'1 Jean',de:'1 Johannes',it:'1 Giovanni',la:'1 Ioannes',ch:5,ae:'1+juan',an:'1+john'},
-  {id:'2john',es:'2 Juan',en:'2 John',pt:'2 João',fr:'2 Jean',de:'2 Johannes',it:'2 Giovanni',la:'2 Ioannes',ch:1,ae:'2+juan',an:'2+john'},
-  {id:'3john',es:'3 Juan',en:'3 John',pt:'3 João',fr:'3 Jean',de:'3 Johannes',it:'3 Giovanni',la:'3 Ioannes',ch:1,ae:'3+juan',an:'3+john'},
-  {id:'jude',es:'Judas',en:'Jude',pt:'Judas',fr:'Jude',de:'Judas',it:'Giuda',la:'Iudas',ch:1,ae:'judas',an:'jude'},
-  {id:'revelation',es:'Apocalipsis',en:'Revelation',pt:'Apocalipse',fr:'Apocalypse',de:'Offenbarung',it:'Apocalisse',la:'Apocalypsis',ch:22,ae:'apocalipsis',an:'revelation'},
-];
-const ALL_BOOKS=[...OT,...NT];
+      // Glow size and intensity scale aggressively with brightness
+      const glowPx    = isOn ? 10 + t * 80 : 0;
+      const glowAlpha = isOn ? 0.2 + t * 0.8 : 0;
+      document.getElementById('moonSvg').style.filter = isOn
+        ? `drop-shadow(0 0 ${glowPx}px ${currentWarm}) drop-shadow(0 0 ${glowPx * 1.8}px ${currentWarm}) drop-shadow(0 12px 32px rgba(255,200,150,${glowAlpha}))`
+        : 'none';
 
-// ══════════════════════════════════════════════════════════
-//  SAINTS DATA
-// ══════════════════════════════════════════════════════════
-const SAINTS={'01-01':[{n:'Santa María, Madre de Dios',d:'Solemnidad de María como Madre de Dios. Primer día del año.',b:'luke',c:1,r:'Lucas 1:26-38'},{n:'San Basilio Magno',d:'Obispo de Cesarea (329-379), Doctor de la Iglesia.',b:'john',c:10,r:'Juan 10:11-16'}],'01-06':[{n:'Epifanía del Señor',d:'Manifestación de Jesús a los Reyes Magos de Oriente.',b:'matthew',c:2,r:'Mateo 2:1-12'}],'01-17':[{n:'San Antonio Abad',d:'Padre del monaquismo cristiano (251-356), ermitaño del desierto.',b:'matthew',c:19,r:'Mateo 19:16-22'}],'01-24':[{n:'San Francisco de Sales',d:'Obispo y Doctor de la Iglesia (1567-1622), patrono de periodistas.',b:'matthew',c:5,r:'Mateo 5:1-12'}],'01-25':[{n:'Conversión de San Pablo',d:'Saulo cae del caballo en el camino a Damasco y conoce a Cristo.',b:'acts',c:9,r:'Hechos 9:1-22'}],'01-28':[{n:'Santo Tomás de Aquino',d:'Doctor Angélico (1225-1274), Suma Teológica.',b:'proverbs',c:8,r:'Proverbios 8:1-36'}],'02-02':[{n:'Presentación del Señor (Candelaria)',d:'Jesús es presentado en el templo a los 40 días.',b:'luke',c:2,r:'Lucas 2:22-40'}],'02-14':[{n:'San Valentín',d:'Sacerdote mártir romano del siglo III, patrono de los enamorados.',b:'song',c:2,r:'Cantares 2:1-17'},{n:'Santos Cirilo y Metodio',d:'Apóstoles de los eslavos, creadores del alfabeto cirílico.',b:'matthew',c:28,r:'Mateo 28:16-20'}],'02-22':[{n:'Cátedra de San Pedro',d:'Primado del apóstol Pedro como cabeza de la Iglesia.',b:'matthew',c:16,r:'Mateo 16:13-23'}],'03-19':[{n:'San José',d:'Esposo de la Virgen María, padre adoptivo de Jesús. Patrón de la Iglesia.',b:'matthew',c:1,r:'Mateo 1:18-25'}],'03-25':[{n:'Anunciación del Señor',d:'El ángel Gabriel anuncia a María el nacimiento del Hijo de Dios.',b:'luke',c:1,r:'Lucas 1:26-38'}],'04-23':[{n:'San Jorge',d:'Mártir del siglo III, patrón de Inglaterra y Cataluña.',b:'ephesians',c:6,r:'Efesios 6:10-18'}],'04-29':[{n:'Santa Catalina de Siena',d:'Mística y Doctora de la Iglesia (1347-1380), patrona de Italia.',b:'john',c:15,r:'Juan 15:1-17'}],'05-01':[{n:'San José Obrero',d:'Festividad del trabajo honesto y la dignidad humana.',b:'colossians',c:3,r:'Colosenses 3:23-24'}],'05-15':[{n:'San Isidro Labrador',d:'Patrón de Madrid y agricultores (1070-1130).',b:'psalms',c:104,r:'Salmos 104:1-35'}],'06-13':[{n:'San Antonio de Padua',d:'Franciscano, Doctor de la Iglesia (1195-1231), patrón de los pobres.',b:'matthew',c:13,r:'Mateo 13:44-52'}],'06-24':[{n:'Natividad de San Juan Bautista',d:'Precursor de Cristo, bautizó a Jesús en el río Jordán.',b:'luke',c:1,r:'Lucas 1:57-80'}],'06-29':[{n:'San Pedro y San Pablo',d:'Príncipes de los Apóstoles, mártires en Roma.',b:'matthew',c:16,r:'Mateo 16:13-19'}],'07-22':[{n:'Santa María Magdalena',d:'Primera testigo de la Resurrección. Apóstol de los apóstoles.',b:'john',c:20,r:'Juan 20:1-18'}],'07-25':[{n:'Santiago Apóstol',d:'Apóstol, hermano de Juan, patrón de España. Camino de Santiago.',b:'mark',c:10,r:'Marcos 10:35-45'}],'07-26':[{n:'San Joaquín y Santa Ana',d:'Padres de la Virgen María, abuelos de Jesús.',b:'proverbs',c:31,r:'Proverbios 31:10-31'}],'08-04':[{n:'San Juan María Vianney',d:'El Santo Cura de Ars (1786-1859), patrón de los sacerdotes.',b:'john',c:21,r:'Juan 21:15-19'}],'08-06':[{n:'Transfiguración del Señor',d:'Jesús se manifiesta en su gloria en el monte Tabor.',b:'matthew',c:17,r:'Mateo 17:1-13'}],'08-15':[{n:'Asunción de la Virgen María',d:'Solemnidad de la glorificación de María al cielo.',b:'revelation',c:12,r:'Apocalipsis 12:1-18'}],'08-28':[{n:'San Agustín de Hipona',d:'Obispo y Doctor de la Iglesia (354-430), autor de Confesiones.',b:'psalms',c:27,r:'Salmos 27:1-14'}],'09-14':[{n:'Exaltación de la Santa Cruz',d:'Triunfo de la Cruz como signo de victoria y salvación.',b:'john',c:3,r:'Juan 3:13-17'}],'09-21':[{n:'San Mateo Apóstol',d:'Apóstol y evangelista, antiguo recaudador de impuestos.',b:'matthew',c:9,r:'Mateo 9:9-13'}],'09-27':[{n:'San Vicente de Paúl',d:'Apóstol de la caridad (1581-1660), fundador de los Lazaristas.',b:'matthew',c:25,r:'Mateo 25:31-46'}],'09-29':[{n:'Santos Arcángeles Miguel, Gabriel y Rafael',d:'Festividad de los tres arcángeles de la Escritura.',b:'revelation',c:12,r:'Apocalipsis 12:7-12'}],'09-30':[{n:'San Jerónimo',d:'Doctor de la Iglesia (340-420), tradujo la Biblia al latín (Vulgata).',b:'2timothy',c:3,r:'2 Timoteo 3:14-17'}],'10-01':[{n:'Santa Teresa del Niño Jesús',d:'Carmelita (1873-1897), Doctora de la Iglesia, patrona de las misiones.',b:'matthew',c:18,r:'Mateo 18:1-5'}],'10-04':[{n:'San Francisco de Asís',d:'Fundador de los Franciscanos (1181-1226), patrón de la ecología.',b:'matthew',c:6,r:'Mateo 6:25-34'}],'10-07':[{n:'Nuestra Señora del Rosario',d:'Festividad de la Virgen del Rosario, institida por Pío V.',b:'luke',c:1,r:'Lucas 1:46-55'}],'10-15':[{n:'Santa Teresa de Jesús',d:'Mística carmelita y Doctora de la Iglesia (1515-1582).',b:'psalms',c:63,r:'Salmos 63:1-12'}],'10-18':[{n:'San Lucas Evangelista',d:'Evangelista y médico, autor del Evangelio de Lucas y Hechos.',b:'luke',c:4,r:'Lucas 4:14-21'}],'11-01':[{n:'Todos los Santos',d:'Solemnidad de todos los santos que gozan de Dios en el cielo.',b:'revelation',c:7,r:'Apocalipsis 7:2-17'}],'11-02':[{n:'Fieles Difuntos',d:'Oración de la Iglesia por las almas del purgatorio.',b:'1corinthians',c:15,r:'1 Corintios 15:20-28'}],'11-11':[{n:'San Martín de Tours',d:'Obispo (316-397) que partió su capa con un pobre. Modelo de caridad.',b:'matthew',c:25,r:'Mateo 25:34-40'}],'11-22':[{n:'Santa Cecilia',d:'Mártir romana, patrona de los músicos y cantantes.',b:'psalms',c:150,r:'Salmos 150:1-6'}],'11-30':[{n:'San Andrés Apóstol',d:'Hermano de Pedro, primer llamado por Jesús, patrón de Escocia.',b:'john',c:1,r:'Juan 1:35-42'}],'12-03':[{n:'San Francisco Javier',d:'Jesuita misionero (1506-1552), apóstol de India y Japón.',b:'mark',c:16,r:'Marcos 16:15-20'}],'12-06':[{n:'San Nicolás',d:'Obispo de Mira (270-343), famoso por su generosidad y amor a los pobres.',b:'matthew',c:19,r:'Mateo 19:13-15'}],'12-08':[{n:'Inmaculada Concepción',d:'Solemnidad de María concebida sin pecado original.',b:'luke',c:1,r:'Lucas 1:26-38'}],'12-12':[{n:'Nuestra Señora de Guadalupe',d:'Aparición de María a Juan Diego en México (1531). Patrona de América.',b:'revelation',c:12,r:'Apocalipsis 12:1-6'}],'12-13':[{n:'Santa Lucía',d:'Mártir de Siracusa (†304), patrona de los ciegos.',b:'john',c:9,r:'Juan 9:1-38'}],'12-25':[{n:'Natividad del Señor',d:'Solemnidad del nacimiento de Jesucristo, el Hijo de Dios hecho hombre.',b:'luke',c:2,r:'Lucas 2:1-20'},{n:'Prólogo de San Juan',d:'El Verbo se hizo carne y habitó entre nosotros.',b:'john',c:1,r:'Juan 1:1-18'}],'12-26':[{n:'San Esteban',d:'Primer mártir cristiano, lapidado en Jerusalén.',b:'acts',c:7,r:'Hechos 7:54-60'}],'12-27':[{n:'San Juan Apóstol',d:'El discípulo amado, evangelista y autor del Apocalipsis.',b:'1john',c:1,r:'1 Juan 1:1-10'}],'12-28':[{n:'Santos Inocentes',d:'Niños de Belén asesinados por Herodes buscando al Niño Jesús.',b:'matthew',c:2,r:'Mateo 2:13-18'}],'12-31':[{n:'San Silvestre I',d:'Papa que presidió el primer Concilio de Nicea (†335).',b:'psalms',c:90,r:'Salmos 90:1-17'}]};
+      // Moon glow div
+      moonGlow.style.opacity = isOn ? (0.3 + t * 0.7).toString() : '0';
 
-// ══════════════════════════════════════════════════════════
-//  I18N
-// ══════════════════════════════════════════════════════════
-const TR={es:{ot:'Antiguo Testamento',nt:'Nuevo Testamento',loading:'Cargando...',no_saints:'Sin festividad para este día.',read_bible:'Leer capítulo',prev:'← Anterior',next:'Siguiente →',ver:'Reina Valera 1909',nav:['Inicio','La Biblia','Santoral','Buscar'],home_sub:'La Santa Biblia',home_line:'Palabra de Dios · Dominio Público',hv:'"Tu palabra es una lámpara a mis pies, y una lumbrera a mi camino."',hr:'— Salmos 119:105',hc:['Leer','Escuchar','Santoral','Buscar'],hcd:['Todos los libros','Voz realista','Santos del día','Versículos'],cal_ttl:'✝ Santoral',cal_intro:'Santos del día y su relación con las Escrituras',srch_ttl:'✦ Buscar en las Escrituras',srch_intro:'Busca palabras o frases en la Biblia',srch_ph:'Ej: amor, fe, luz del mundo...',srch_empty:'Escribe para buscar en las Escrituras',bk_ph:'Buscar libro...',months:['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],days:['D','L','M','X','J','V','S'],trans_label:'Traduciendo',trans_done:'Traducción lista',trans_to:'Traducido al'},en:{ot:'Old Testament',nt:'New Testament',loading:'Loading...',no_saints:'No feast day for this date.',read_bible:'Read chapter',prev:'← Previous',next:'Next →',ver:'World English Bible',nav:['Home','The Bible','Saints','Search'],home_sub:'The Holy Bible',home_line:'Word of God · Public Domain',hv:'"Your word is a lamp to my feet, and a light for my path."',hr:'— Psalm 119:105',hc:['Read','Listen','Saints','Search'],hcd:['All books','Realistic voice',"Today's saints",'Find verses'],cal_ttl:'✝ Saints Calendar',cal_intro:'Saints of the day and their related Scripture',srch_ttl:'✦ Search the Scriptures',srch_intro:'Search words or phrases in the Bible',srch_ph:'E.g.: love, faith, light of the world...',srch_empty:'Type to search the Scriptures',bk_ph:'Search book...',months:['January','February','March','April','May','June','July','August','September','October','November','December'],days:['S','M','T','W','T','F','S'],trans_label:'Translating',trans_done:'Translation ready',trans_to:'Translated to'},pt:{ot:'Antigo Testamento',nt:'Novo Testamento',loading:'Carregando...',no_saints:'Sem festividade para este dia.',read_bible:'Ler capítulo',prev:'← Anterior',next:'Próximo →',ver:'Almeida Recebida',nav:['Início','A Bíblia','Santoral','Pesquisar'],home_sub:'A Santa Bíblia',home_line:'Palavra de Deus · Domínio Público',hv:'"A tua palavra é lâmpada que ilumina os meus passos."',hr:'— Salmos 119:105',hc:['Ler','Ouvir','Santoral','Buscar'],hcd:['Todos os livros','Voz realista','Santos do dia','Versículos'],cal_ttl:'✝ Santoral',cal_intro:'Santos do dia e seu relacionamento com as Escrituras',srch_ttl:'✦ Pesquisar nas Escrituras',srch_intro:'Procure palavras na Bíblia',srch_ph:'Ex: amor, fé, luz do mundo...',srch_empty:'Digite para pesquisar nas Escrituras',bk_ph:'Pesquisar livro...',months:['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],days:['D','S','T','Q','Q','S','S'],trans_label:'Traduzindo',trans_done:'Tradução pronta',trans_to:'Traduzido para'},fr:{ot:'Ancien Testament',nt:'Nouveau Testament',loading:'Chargement...',no_saints:'Pas de fête pour cette date.',read_bible:'Lire le chapitre',prev:'← Précédent',next:'Suivant →',ver:'Louis Segond 1910',nav:['Accueil','La Bible','Saints','Chercher'],home_sub:'La Sainte Bible',home_line:'Parole de Dieu · Domaine Public',hv:'"Ta parole est une lampe à mes pieds, et une lumière sur mon sentier."',hr:'— Psaumes 119:105',hc:['Lire','Écouter','Saints','Chercher'],hcd:['Tous les livres','Voix réaliste','Saints du jour','Trouver'],cal_ttl:'✝ Calendrier des Saints',cal_intro:'Saints du jour et leur lien avec les Écritures',srch_ttl:'✦ Chercher dans les Écritures',srch_intro:'Cherchez des mots dans la Bible',srch_ph:'Ex: amour, foi, lumière du monde...',srch_empty:'Tapez pour chercher dans les Écritures',bk_ph:'Chercher un livre...',months:['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],days:['D','L','M','M','J','V','S'],trans_label:'Traduction',trans_done:'Traduction prête',trans_to:'Traduit en'},de:{ot:'Altes Testament',nt:'Neues Testament',loading:'Lädt...',no_saints:'Kein Festtag für dieses Datum.',read_bible:'Kapitel lesen',prev:'← Zurück',next:'Weiter →',ver:'Luther 1912',nav:['Startseite','Die Bibel','Heilige','Suchen'],home_sub:'Die Heilige Bibel',home_line:'Wort Gottes · Gemeinfrei',hv:'"Dein Wort ist meines Fußes Leuchte und ein Licht auf meinem Wege."',hr:'— Psalm 119:105',hc:['Lesen','Anhören','Heilige','Suchen'],hcd:['Alle Bücher','Realistische Stimme','Heilige des Tages','Suchen'],cal_ttl:'✝ Heiligenkalender',cal_intro:'Heilige des Tages und ihr Bezug zur Schrift',srch_ttl:'✦ In der Schrift suchen',srch_intro:'Suche Wörter in der Bibel',srch_ph:'Z.B.: Liebe, Glaube, Licht der Welt...',srch_empty:'Tippen zum Suchen in der Schrift',bk_ph:'Buch suchen...',months:['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],days:['S','M','D','M','D','F','S'],trans_label:'Übersetzung',trans_done:'Übersetzung fertig',trans_to:'Übersetzt in'},it:{ot:'Antico Testamento',nt:'Nuovo Testamento',loading:'Caricamento...',no_saints:'Nessuna festa per questa data.',read_bible:'Leggi il capitolo',prev:'← Precedente',next:'Successivo →',ver:'Giovanni Diodati',nav:['Inizio','La Bibbia','Santoral','Cerca'],home_sub:'La Santa Bibbia',home_line:'Parola di Dio · Pubblico Dominio',hv:'"La tua parola è una lampada ai miei piedi e una luce al mio cammino."',hr:'— Salmi 119:105',hc:['Leggere','Ascoltare','Santoral','Cerca'],hcd:['Tutti i libri','Voce realistica','Santi del giorno','Versetti'],cal_ttl:'✝ Calendario dei Santi',cal_intro:'Santi del giorno e il loro legame con le Scritture',srch_ttl:'✦ Cerca nelle Scritture',srch_intro:'Cerca parole nella Bibbia',srch_ph:'Es: amore, fede, luce del mondo...',srch_empty:'Scrivi per cercare nelle Scritture',bk_ph:'Cerca un libro...',months:['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'],days:['D','L','M','M','G','V','S'],trans_label:'Traduzione',trans_done:'Traduzione pronta',trans_to:'Tradotto in'},la:{ot:'Vetus Testamentum',nt:'Novum Testamentum',loading:'Onerando...',no_saints:'Nulla festivitas pro hac die.',read_bible:'Lege caput',prev:'← Prius',next:'Sequens →',ver:'Vulgata Clementina',nav:['Principium','Biblia','Sancti','Quaere'],home_sub:'Sacra Biblia',home_line:'Verbum Dei · Publici Iuris',hv:'"Lucerna pedibus meis verbum tuum et lumen semitis meis."',hr:'— Psalmus 118:105',hc:['Legere','Audire','Sancti','Quaere'],hcd:['Omnes libri','Vox realis','Sancti diei','Versus'],cal_ttl:'✝ Calendarium Sanctorum',cal_intro:'Sancti diei et eorum relatio cum Scripturis',srch_ttl:'✦ Quaere in Scripturis',srch_intro:'Quaere verba in Biblia',srch_ph:'e.g.: caritas, fides, lux mundi...',srch_empty:'Scribe ad quaerendum in Scripturis',bk_ph:'Quaere librum...',months:['Ianuarius','Februarius','Martius','Aprilis','Maius','Iunius','Iulius','Augustus','September','October','November','December'],days:['S','F','M','M','I','V','S'],trans_label:'Interpretatio',trans_done:'Interpretatio parata',trans_to:'In'},};
+      // Background ambient — kicks in after 20%
+      const bgAlpha = Math.max(0, (t - 0.2) / 0.8);
+      const hex = Math.round(bgAlpha * 180).toString(16).padStart(2, '0');
+      const baseBg = darkMode ? '#1a0f2e' : '#f5e6f0';
+      body.style.background = isOn
+        ? `radial-gradient(ellipse at 50% 55%, ${currentWarm}${hex} 0%, ${baseBg} 70%)`
+        : baseBg;
 
-function t(k){return(TR[S.lang]||TR.es)[k]||(TR.es)[k]||k;}
+      // Controls
+      controls.style.opacity = isOn ? '1' : '0.4';
+      controls.style.pointerEvents = isOn ? 'all' : 'none';
 
-// ══════════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════════
-const S={
-  lang:'es', book:OT[0], ch:1, verses:[],
-  speaking:false, speedIdx:1, speeds:[0.8,1,1.25,1.5,1.75],
-  calY:new Date().getFullYear(), calM:new Date().getMonth(), calD:new Date().getDate(),
-  ttsProvider:'browser', elKey:'', gcKey:'',
-  selectedVoice:null, allVoices:[],
-  translating:false, translationCache:{},
-};
+      tapHint.textContent = isOn ? 'toca para apagar 🌙' : 'toca la luna para encender ✨';
 
-// ══════════════════════════════════════════════════════════
-//  NAVIGATION
-// ══════════════════════════════════════════════════════════
-function showPage(name){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
-    b.classList.remove('active');
-    if(['home','bible','calendar','search'][i]===name) b.classList.add('active');
-  });
-  if(name==='bible'&&S.verses.length===0) loadChapter();
-  if(name==='calendar') renderCal();
-  if(name!=='bible') stopAudio();
-}
+      // Moon warm gradient stop
+      document.querySelector('#moonGrad stop:last-child')
+        .setAttribute('stop-color', isOn ? currentWarm : '#ffe8d8');
+    }
 
-// ══════════════════════════════════════════════════════════
-//  BOOK LIST
-// ══════════════════════════════════════════════════════════
-function renderBooks(filter=''){
-  const lf=filter.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  let html='';
-  [{label:t('ot'),arr:OT},{label:t('nt'),arr:NT}].forEach(({label,arr})=>{
-    const f=arr.filter(b=>!filter||(b[S.lang]||b.en).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(lf));
-    if(!f.length) return;
-    html+=`<div class="test-lbl">${label}</div>`;
-    f.forEach(book=>{
-      const name=book[S.lang]||book.en;
-      const active=book.id===S.book.id;
-      html+=`<div class="book-item ${active?'active':''}" onclick="selBook('${book.id}')">${name} <small style="opacity:0.32">${book.ch}</small></div>`;
-      if(active){
-        html+='<div class="book-chapters">';
-        for(let c=1;c<=book.ch;c++) html+=`<button class="ch-btn ${c===S.ch?'active':''}" onclick="selCh(${c})">${c}</button>`;
-        html+='</div>';
-      }
-    });
-  });
-  document.getElementById('bookList').innerHTML=html;
-}
-function filterBooks(v){renderBooks(v);}
-function selBook(id){
-  const b=ALL_BOOKS.find(x=>x.id===id);
-  if(!b) return;
-  S.book=b; S.ch=1;
-  renderBooks(document.getElementById('bookSrch').value);
-  loadChapter(); stopAudio();
-}
-function selCh(c){
-  S.ch=c;
-  renderBooks(document.getElementById('bookSrch').value);
-  loadChapter(); stopAudio();
-  document.querySelector('.reading-area').scrollIntoView({behavior:'smooth'});
-  checkInterstitialTrigger(); // ← Trigger ad check
-}
+    // ─── COLOR ───────────────────────────────
+    function setColor(dot) {
+      document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+      dot.classList.add('selected');
+      currentWarm = dot.dataset.warm;
+      document.documentElement.style.setProperty('--warm', currentWarm);
+      applyLight();
+    }
 
-// ══════════════════════════════════════════════════════════
-//  BIBLE TEXT ENGINE
-//  Fuente primaria: Claude AI (genera texto de dominio público)
-//  Fuente secundaria: bible-api.com (si está disponible)
-//  Sin dependencias externas críticas
-// ══════════════════════════════════════════════════════════
+    // ─── BRIGHTNESS ──────────────────────────
+    function setBrightness(val) {
+      brightness = parseInt(val);
+      applyLight();
+    }
 
-// Versiones de dominio público por idioma
-const BIBLE_VERSIONS = {
-  es: 'Reina Valera 1909',
-  en: 'World English Bible',
-  pt: 'Almeida Recebida 1911',
-  fr: 'Louis Segond 1910',
-  de: 'Luther 1912',
-  it: 'Giovanni Diodati 1649',
-  la: 'Vulgata Clementina',
-};
-
-const LANG_FULL = {
-  es:'Spanish (Reina Valera 1909)',
-  en:'English (World English Bible)',
-  pt:'Portuguese (Almeida Recebida)',
-  fr:'French (Louis Segond 1910)',
-  de:'German (Luther 1912)',
-  it:'Italian (Giovanni Diodati)',
-  la:'Latin (Vulgate)',
-};
-
-// Cache de capítulos ya cargados
-const CHAPTER_CACHE = {};
-
-async function loadChapter(){
-  const vc = document.getElementById('verseContainer');
-  vc.innerHTML = `<div class="loading-st"><div class="ld-cross">✝</div><p>${t('loading')}</p></div>`;
-
-  const bookName = S.book[S.lang] || S.book.en;
-  document.getElementById('rdTitle').textContent = `${bookName} ${S.ch}`;
-  document.getElementById('rdSub').textContent = `${t(isOT()?'ot':'nt')} · ${BIBLE_VERSIONS[S.lang]||'World English Bible'}`;
-  document.getElementById('prevBtn').textContent = t('prev');
-  document.getElementById('nextBtn').textContent = t('next');
-  document.getElementById('prevBtn').disabled = S.ch <= 1;
-  document.getElementById('nextBtn').disabled = S.ch >= S.book.ch;
-
-  const cacheKey = `${S.book.id}-${S.ch}-${S.lang}`;
-
-  // Return from cache if available
-  if(CHAPTER_CACHE[cacheKey]){
-    S.verses = CHAPTER_CACHE[cacheKey];
-    renderVerses(S.verses, null);
-    return;
-  }
-
-  // Strategy 1: Try bible-api.com (fast if available)
-  const verses = await tryBibleAPI();
-  if(verses && verses.length){
-    S.verses = verses;
-    CHAPTER_CACHE[cacheKey] = verses;
-    renderVerses(verses, null);
-    if(S.lang !== 'en' && S.lang !== 'es') translateChapterWithAI(verses);
-    return;
-  }
-
-  // Strategy 2: Use Claude AI to render the chapter (always works)
-  await loadChapterWithClaude(bookName);
-}
-
-async function tryBibleAPI(){
-  try{
-    const version = S.lang === 'es' ? 'rv1909' : 'web';
-    const bookName = S.lang === 'es' ? S.book.ae : S.book.an;
-    const url = `https://bible-api.com/${bookName}+${S.ch}?translation=${version}`;
-    const ctrl = new AbortController();
-    const timer = setTimeout(()=>ctrl.abort(), 6000);
-    const r = await fetch(url, {signal: ctrl.signal});
-    clearTimeout(timer);
-    if(!r.ok) return null;
-    const d = await r.json();
-    return (d.verses && d.verses.length) ? d.verses : null;
-  } catch(e){ return null; }
-}
-
-async function loadChapterWithClaude(bookNameLocalized){
-  const vc = document.getElementById('verseContainer');
-  const langInstruction = LANG_FULL[S.lang] || 'Spanish (Reina Valera 1909)';
-  const bookEn = S.book.en;
-
-  // Show a loading message while Claude generates
-  vc.innerHTML = `<div class="loading-st">
-    <div class="ld-cross">✝</div>
-    <p style="margin-bottom:0.4rem">${t('loading')}</p>
-    <p style="font-size:0.8rem;opacity:0.5;font-family:'Cinzel',serif;letter-spacing:0.05em">Generando con IA...</p>
-  </div>`;
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        system: `You are a sacred scripture renderer. Your task is to provide the exact text of Bible chapters from public domain translations. Always respond with ONLY a valid JSON array, no markdown, no preamble, no explanation. Format: [{"verse":1,"text":"verse text"},{"verse":2,"text":"verse text"},...]`,
-        messages:[{
-          role: 'user',
-          content: `Provide the complete text of ${bookEn} chapter ${S.ch} in ${langInstruction}. Use only public domain translations (before 1928). Return ONLY the JSON array with all verses.`
-        }]
-      })
-    });
-
-    if(!response.ok) throw new Error(`API ${response.status}`);
-    const data = await response.json();
-    const raw = data.content[0].text.trim();
-    // Strip any markdown fences
-    const clean = raw.replace(/^```json?\s*/,'').replace(/\s*```$/,'').trim();
-    const verses = JSON.parse(clean);
-
-    if(!Array.isArray(verses) || !verses.length) throw new Error('Empty response');
-
-    S.verses = verses;
-    const cacheKey = `${S.book.id}-${S.ch}-${S.lang}`;
-    CHAPTER_CACHE[cacheKey] = verses;
-    renderVerses(verses, null);
-
-  } catch(e) {
-    console.error('Claude chapter error:', e);
-    vc.innerHTML = `<div class="err-st">
-      <p>No se pudo cargar el capítulo.</p>
-      <p style="font-size:0.82rem;opacity:0.5;margin-top:0.4rem">${e.message||''}</p>
-      <button class="retry-btn" onclick="loadChapter()">↻ Reintentar</button>
-    </div>`;
-  }
-}
-
-
-function renderVerses(verses, translations){
-  const vc=document.getElementById('verseContainer');
-  const langNames={en:'English',es:'Español',pt:'Português',fr:'Français',de:'Deutsch',it:'Italiano',la:'Latina'};
-  let html='';
-  verses.forEach((v,i)=>{
-    const trans=translations&&translations[i];
-    html+=`<p class="verse" id="v${v.verse}">
-      <sup class="vn">${v.verse}</sup><span class="vt">${escHtml(v.text)}</span>
-      ${trans?`<span class="verse-translated"><span class="trans-lang-label">${langNames[S.lang]||S.lang}</span>${escHtml(trans)}</span>`:''}
-    </p>`;
-  });
-  vc.innerHTML=html;
-}
-
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function isOT(){return OT.some(b=>b.id===S.book.id);}
-
-function changeChapter(d){
-  const nc=S.ch+d;
-  if(nc<1||nc>S.book.ch) return;
-  S.ch=nc;
-  renderBooks(document.getElementById('bookSrch').value);
-  loadChapter(); stopAudio();
-  window.scrollTo({top:62,behavior:'smooth'});
-  checkInterstitialTrigger(); // ← Trigger ad check on chapter change
-}
-
-// ══════════════════════════════════════════════════════════
-//  AI TRANSLATION — Claude API (simultánea por capítulo)
-// ══════════════════════════════════════════════════════════
-const LANG_NAMES={en:'English',es:'Spanish',pt:'Portuguese',fr:'French',de:'German',it:'Italian',la:'Latin'};
-
-async function translateChapterWithAI(verses){
-  const cacheKey=`${S.book.id}-${S.ch}-${S.lang}`;
-  if(S.translationCache[cacheKey]){
-    renderVerses(verses, S.translationCache[cacheKey]);
-    return;
-  }
-
-  // Show translation bar
-  const bar=document.getElementById('transBar');
-  bar.style.display='flex';
-  document.getElementById('transText').textContent=`Traduciendo al ${LANG_NAMES[S.lang]||S.lang}...`;
-  document.getElementById('transIndicator').className='trans-indicator';
-  document.getElementById('transBadge').textContent='Traducción IA · Claude';
-  document.getElementById('transLabel').textContent=t('trans_label');
-
-  // Build verse text for translation (send in batches of 20 to avoid token limits)
-  const BATCH=20;
-  const allTranslations=[];
-  
-  for(let i=0;i<verses.length;i+=BATCH){
-    const batch=verses.slice(i,i+BATCH);
-    const batchText=batch.map((v,j)=>`[${j+1}] ${v.text}`).join('\n');
-    
-    try{
-      const response=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          model:'claude-sonnet-4-20250514',
-          max_tokens:2000,
-          system:`You are a sacred scripture translator with the reverence and style of a biblical scholar. Translate the following Bible verses to ${LANG_NAMES[S.lang]||S.lang}. Keep the sacred, solemn tone appropriate for scripture. Return ONLY a JSON array of translated strings in the same order, no other text. Example: ["verse1 translated","verse2 translated"]`,
-          messages:[{role:'user',content:`Translate these Bible verses to ${LANG_NAMES[S.lang]||S.lang}:\n\n${batchText}`}]
-        })
+    // ─── TIMER ───────────────────────────────
+    function setTimer(minutes) {
+      clearInterval(timerInterval);
+      document.querySelectorAll('.controls .btn').forEach(b => {
+        if (['15 min','30 min','1 hora','∞'].includes(b.textContent)) b.classList.remove('active');
       });
-      
-      if(response.ok){
-        const data=await response.json();
-        const raw=data.content[0].text.trim();
-        const clean=raw.replace(/```json|```/g,'').trim();
-        const parsed=JSON.parse(clean);
-        allTranslations.push(...parsed);
-      } else {
-        // Fill with empty if error
-        for(let k=0;k<batch.length;k++) allTranslations.push('');
+      event.target.classList.add('active');
+
+      if (minutes === 0) {
+        timerBadge.classList.remove('show');
+        return;
       }
-    } catch(e){
-      for(let k=0;k<batch.length;k++) allTranslations.push('');
+
+      timerSeconds = minutes * 60;
+      timerBadge.textContent = formatTime(timerSeconds);
+      timerBadge.classList.add('show');
+
+      timerInterval = setInterval(() => {
+        timerSeconds--;
+        timerBadge.textContent = formatTime(timerSeconds);
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          timerBadge.classList.remove('show');
+          isOn = false;
+          applyLight();
+        }
+      }, 1000);
     }
-  }
 
-  // Update translation bar to done
-  document.getElementById('transIndicator').innerHTML=`<span class="trans-done">✓</span> <span id="transText">${t('trans_done')}</span>`;
-  
-  S.translationCache[cacheKey]=allTranslations;
-  renderVerses(verses, allTranslations);
-  
-  // Hide bar after 2s
-  setTimeout(()=>{bar.style.display='none';},2000);
-}
-
-// ══════════════════════════════════════════════════════════
-//  VOICE / TTS SYSTEM
-// ══════════════════════════════════════════════════════════
-const SPEECH_LANG={es:'es-ES',en:'en-GB',pt:'pt-PT',fr:'fr-FR',de:'de-DE',it:'it-IT',la:'la'};
-
-// Preferred voice keywords for "cleric-like" deep voice
-const VOICE_PREFS={
-  'es':['Google español','es-ES-Standard-D','es-ES-Neural','Jorge','Carlos','Español (España)'],
-  'en':['Google UK English Male','en-GB-Neural','Daniel','Thomas','British Male'],
-  'pt':['Google português','pt-PT','Português'],
-  'fr':['Google français','fr-FR-Neural','Thomas','French Male'],
-  'de':['Google Deutsch','de-DE-Neural','Hans','German Male'],
-  'it':['Google italiano','it-IT-Neural','Luca','Italian Male'],
-  'la':['Google','Latin'],
-};
-
-function loadVoices(){
-  const voices=window.speechSynthesis.getVoices();
-  S.allVoices=voices;
-  const sel=document.getElementById('voiceSel');
-  const langCode=SPEECH_LANG[S.lang]||'es-ES';
-  
-  // Filter relevant voices
-  const relevant=voices.filter(v=>v.lang.startsWith(langCode.substring(0,2)));
-  const all=relevant.length?relevant:voices.slice(0,20);
-  
-  sel.innerHTML='<option value="">— Voz automática —</option>';
-  all.forEach((v,i)=>{
-    const opt=document.createElement('option');
-    opt.value=v.name;
-    opt.textContent=v.name.replace('Google ','').replace(' (','·(').substring(0,28);
-    sel.appendChild(opt);
-  });
-
-  // Auto-select best voice (deep, male)
-  const prefs=VOICE_PREFS[S.lang]||[];
-  let best=null;
-  for(const pref of prefs){
-    const found=voices.find(v=>v.name.toLowerCase().includes(pref.toLowerCase()));
-    if(found){best=found;break;}
-  }
-  // Fallback: first matching language
-  if(!best) best=voices.find(v=>v.lang.startsWith(langCode.substring(0,2)));
-  if(best){
-    sel.value=best.name;
-    S.selectedVoice=best;
-  }
-}
-
-function getSelectedVoice(){
-  const selName=document.getElementById('voiceSel').value;
-  if(selName) return S.allVoices.find(v=>v.name===selName)||null;
-  return S.selectedVoice;
-}
-
-function toggleAudio(){
-  if(!window.speechSynthesis){toast('Audio no disponible en este navegador');return;}
-  if(S.speaking){
-    window.speechSynthesis.pause(); S.speaking=false;
-    document.getElementById('playBtn').textContent='▶';
-    document.getElementById('playBtn').classList.remove('playing');
-  } else {
-    if(window.speechSynthesis.paused){
-      window.speechSynthesis.resume(); S.speaking=true;
-      document.getElementById('playBtn').textContent='⏸';
-      document.getElementById('playBtn').classList.add('playing');
-    } else { startAudio(); }
-  }
-}
-
-async function startAudio(){
-  if(!S.verses||!S.verses.length) return;
-
-  // If ElevenLabs selected and key exists, use it
-  if(S.ttsProvider==='elevenlabs' && S.elKey){
-    await playElevenLabs(); return;
-  }
-  // If Google Cloud TTS
-  if(S.ttsProvider==='google' && S.gcKey){
-    await playGoogleTTS(); return;
-  }
-
-  // Browser TTS (enhanced)
-  playBrowserTTS();
-}
-
-function playBrowserTTS(){
-  const text=S.verses.map(v=>v.text).join('. ');
-  const u=new SpeechSynthesisUtterance(text);
-  
-  const voice=getSelectedVoice();
-  if(voice) u.voice=voice;
-  u.lang=SPEECH_LANG[S.lang]||'es-ES';
-  u.rate=S.speeds[S.speedIdx];
-  u.pitch=0.82; // Slightly lower pitch = more solemn
-  u.volume=1;
-  
-  u.onstart=()=>{S.speaking=true;document.getElementById('playBtn').textContent='⏸';document.getElementById('playBtn').classList.add('playing');};
-  u.onend=()=>{S.speaking=false;document.getElementById('playBtn').textContent='▶';document.getElementById('playBtn').classList.remove('playing');document.querySelectorAll('.verse').forEach(el=>el.classList.remove('hl'));};
-  u.onerror=()=>{S.speaking=false;document.getElementById('playBtn').textContent='▶';document.getElementById('playBtn').classList.remove('playing');};
-  u.onboundary=(e)=>{
-    if(e.name==='word'){
-      const soFar=text.substring(0,e.charIndex);
-      const dots=(soFar.match(/\./g)||[]).length;
-      document.querySelectorAll('.verse').forEach(el=>el.classList.remove('hl'));
-      const vs=document.querySelectorAll('.verse');
-      if(vs[Math.min(dots,vs.length-1)]) vs[Math.min(dots,vs.length-1)].classList.add('hl');
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${m}:${sec.toString().padStart(2,'0')}`;
     }
-  };
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
-}
 
-// ElevenLabs TTS (ultra-realistic, free tier 10k chars/month)
-// Voces masculinas recomendadas: Antoni, Thomas, Daniel, Ethan
-const EL_VOICES={
-  Antoni:'ErXwobaYiN019PkySvjV',
-  Thomas:'GBv7mTt0atIp3Br8iCZE',
-  Daniel:'onwK4e9ZLuTAKqWW03F9',
-  Ethan:'g5CIjZEefAph4nQFvHAz',
-};
+    // Dark mode siempre activo
+    body.classList.add('dark-mode');
 
-async function playElevenLabs(){
-  const text=S.verses.map(v=>v.text).join(' ');
-  const voiceId=EL_VOICES.Thomas; // Thomas = deep, calm, masculine
-
-  try{
-    const res=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,{
-      method:'POST',
-      headers:{
-        'xi-api-key':S.elKey,
-        'Content-Type':'application/json',
-        'Accept':'audio/mpeg',
-      },
-      body:JSON.stringify({
-        text:text.substring(0,3000), // Free tier limit
-        model_id:'eleven_multilingual_v2',
-        voice_settings:{stability:0.72,similarity_boost:0.75,style:0.08,use_speaker_boost:true}
-      })
-    });
-
-    if(!res.ok){toast('Error ElevenLabs: comprueba tu API key');return;}
-    const blob=await res.blob();
-    const url=URL.createObjectURL(blob);
-    const audio=new Audio(url);
-    S.audioEl=audio;
-    audio.playbackRate=S.speeds[S.speedIdx];
-    S.speaking=true;
-    document.getElementById('playBtn').textContent='⏸';
-    document.getElementById('playBtn').classList.add('playing');
-    audio.play();
-    audio.onended=()=>{
-      S.speaking=false;
-      document.getElementById('playBtn').textContent='▶';
-      document.getElementById('playBtn').classList.remove('playing');
-      URL.revokeObjectURL(url);
+    // ─── SCREEN BOOST ────────────────────────
+    // slider 10-100 → zona 80-100 empuja brillo más allá del hardware
+    const screenBoost = document.getElementById("screenBoost");
+    const _baseApply = applyLight;
+    applyLight = function () {
+      _baseApply();
+      if (!isOn) { screenBoost.style.opacity = 0; return; }
+      const t = brightness / 100;
+      screenBoost.style.opacity = t >= 0.8 ? ((t - 0.8) / 0.2) * 0.45 : 0;
     };
-  } catch(e){
-    toast('Error al conectar con ElevenLabs');
-    playBrowserTTS();
-  }
-}
 
-// Google Cloud Text-to-Speech (WaveNet voices)
-async function playGoogleTTS(){
-  const text=S.verses.map(v=>v.text).join('. ');
-  const langMap={es:'es-ES',en:'en-GB',pt:'pt-PT',fr:'fr-FR',de:'de-DE',it:'it-IT',la:'la-Latn'};
-  const voiceMap={es:'es-ES-Wavenet-B',en:'en-GB-Wavenet-B',pt:'pt-PT-Wavenet-B',fr:'fr-FR-Wavenet-B',de:'de-DE-Wavenet-B',it:'it-IT-Wavenet-C',la:'en-GB-Wavenet-B'};
-
-  try{
-    const res=await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${S.gcKey}`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        input:{text:text.substring(0,4500)},
-        voice:{languageCode:langMap[S.lang]||'es-ES',name:voiceMap[S.lang]||'es-ES-Wavenet-B'},
-        audioConfig:{audioEncoding:'MP3',speakingRate:S.speeds[S.speedIdx],pitch:-2.0}
-      })
-    });
-    if(!res.ok){toast('Error Google TTS: comprueba tu API key');return;}
-    const data=await res.json();
-    const audio=new Audio(`data:audio/mp3;base64,${data.audioContent}`);
-    S.audioEl=audio;
-    S.speaking=true;
-    document.getElementById('playBtn').textContent='⏸';
-    document.getElementById('playBtn').classList.add('playing');
-    audio.play();
-    audio.onended=()=>{S.speaking=false;document.getElementById('playBtn').textContent='▶';document.getElementById('playBtn').classList.remove('playing');};
-  } catch(e){
-    toast('Error al conectar con Google TTS');
-    playBrowserTTS();
-  }
-}
-
-function stopAudio(){
-  if(window.speechSynthesis) window.speechSynthesis.cancel();
-  if(S.audioEl){S.audioEl.pause();S.audioEl=null;}
-  S.speaking=false;
-  const pb=document.getElementById('playBtn');
-  if(pb){pb.textContent='▶';pb.classList.remove('playing');}
-  document.querySelectorAll('.verse').forEach(el=>el.classList.remove('hl'));
-}
-
-function cycleSpeed(){
-  S.speedIdx=(S.speedIdx+1)%S.speeds.length;
-  const lbls=['0.8×','1×','1.25×','1.5×','1.75×'];
-  document.getElementById('spdBtn').textContent=lbls[S.speedIdx];
-  if(S.audioEl) S.audioEl.playbackRate=S.speeds[S.speedIdx];
-  if(S.speaking){stopAudio();setTimeout(startAudio,100);}
-  toast(`Velocidad: ${lbls[S.speedIdx]}`);
-}
-
-// ══════════════════════════════════════════════════════════
-//  TTS MODAL
-// ══════════════════════════════════════════════════════════
-
-function selectTTSProvider(p){
-  S.ttsProvider=p;
-  document.querySelectorAll('.pro-opt').forEach(o=>o.classList.remove('selected'));
-  const el=document.getElementById('opt-'+p);
-  if(el) el.classList.add('selected');
-}
-
-function saveTTSConfig(){
-  S.elKey=(document.getElementById('elKey')||{}).value||'';
-  S.gcKey=(document.getElementById('gcKey')||{}).value||'';
-  S.elKey=S.elKey.trim(); S.gcKey=S.gcKey.trim();
-  // Update PRO btn label with voice hint
-  const labels={browser:'',elevenlabs:' · ElevenLabs',google:' · WaveNet'};
-  closeProModal();
-  toast('Voz guardada ✓');
-  if(S.speaking){stopAudio();setTimeout(startAudio,120);}
-}
-
-// Keep old names as aliases for backward-compat with purchase modal links
-function openTTSModal(){ }
-function closeTTSModal(){ }
-
-
-// ══════════════════════════════════════════════════════════
-//  CALENDAR
-// ══════════════════════════════════════════════════════════
-function renderCal(){
-  const{calY:y,calM:m,calD:sel}=S;
-  const months=t('months'),days=t('days'),today=new Date();
-  document.getElementById('calTtl').textContent=t('cal_ttl');
-  document.getElementById('calIntro').textContent=t('cal_intro');
-  document.getElementById('calMY').textContent=`${months[m]} ${y}`;
-  const firstDay=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
-  let g='';
-  days.forEach(d=>{g+=`<div class="cdh">${d}</div>`;});
-  for(let i=0;i<firstDay;i++) g+=`<div class="cd empty"></div>`;
-  for(let d=1;d<=dim;d++){
-    const mm=String(m+1).padStart(2,'0'),dd=String(d).padStart(2,'0'),key=`${mm}-${dd}`;
-    const hs=!!SAINTS[key];
-    const it=(today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d);
-    const is=(d===sel&&m===S.calM&&y===S.calY);
-    g+=`<div class="cd ${it?'today':''} ${is?'selected':''} ${hs?'has-saint':''}" onclick="selDay(${d})">${d}</div>`;
-  }
-  document.getElementById('calGrid').innerHTML=g;
-  renderSaints(sel,m,y);
-}
-function selDay(d){S.calD=d;renderCal();}
-function chMonth(dir){S.calM+=dir;if(S.calM<0){S.calM=11;S.calY--;}if(S.calM>11){S.calM=0;S.calY++;}S.calD=1;renderCal();}
-function renderSaints(d,m,y){
-  const mm=String(m+1).padStart(2,'0'),dd=String(d).padStart(2,'0'),key=`${mm}-${dd}`;
-  const months=t('months'),today=new Date();
-  const isTd=(today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d);
-  document.getElementById('saintsDH').textContent=isTd?`HOY — ${d} ${months[m]}`:`${d} ${months[m]} ${y}`;
-  const saints=SAINTS[key],c=document.getElementById('saintsList');
-  if(!saints||!saints.length){c.innerHTML=`<div class="no-saints">${t('no_saints')}</div>`;return;}
-  let html='';
-  saints.forEach(s=>{html+=`<div class="saint-card"><div class="saint-name">✝ ${s.n}</div><div class="saint-desc">${s.d}</div><button class="saint-link" onclick="goSaint('${s.b}',${s.c})">📖 ${s.r} — ${t('read_bible')}</button></div>`;});
-  c.innerHTML=html;
-}
-function goSaint(bookId,ch){
-  const b=ALL_BOOKS.find(x=>x.id===bookId);
-  if(!b) return;
-  S.book=b; S.ch=ch; showPage('bible'); renderBooks(); loadChapter();
-}
-
-// ══════════════════════════════════════════════════════════
-//  SEARCH
-// ══════════════════════════════════════════════════════════
-const VERSE_INDEX=[
-  {r:'Juan 3:16',t:'Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna.',b:'john',c:3},
-  {r:'Sal 23:1',t:'El Señor es mi pastor; nada me faltará. En lugares de delicados pastos me hará descansar.',b:'psalms',c:23},
-  {r:'Sal 119:105',t:'Tu palabra es una lámpara a mis pies y una lumbrera a mi camino.',b:'psalms',c:119},
-  {r:'Prov 3:5-6',t:'Fíate del Señor de todo tu corazón, y no te apoyes en tu propia prudencia. Reconócele en todos tus caminos.',b:'proverbs',c:3},
-  {r:'Is 40:31',t:'Los que esperan en el Señor tendrán nuevas fuerzas; levantarán las alas como las águilas.',b:'isaiah',c:40},
-  {r:'Is 41:10',t:'No temas, porque yo soy contigo; no desmayes, porque yo soy tu Dios que te esfuerzo.',b:'isaiah',c:41},
-  {r:'Jer 29:11',t:'Porque yo sé los pensamientos que tengo acerca de vosotros, dice el Señor, pensamientos de paz y no de mal.',b:'jeremiah',c:29},
-  {r:'Mt 5:3',t:'Bienaventurados los pobres en espíritu, porque de ellos es el reino de los cielos.',b:'matthew',c:5},
-  {r:'Mt 5:9',t:'Bienaventurados los pacificadores, porque ellos serán llamados hijos de Dios.',b:'matthew',c:5},
-  {r:'Mt 6:33',t:'Mas buscad primeramente el reino de Dios y su justicia, y todas estas cosas os serán añadidas.',b:'matthew',c:6},
-  {r:'Mt 11:28',t:'Venid a mí todos los que estáis trabajados y cargados, y yo os haré descansar.',b:'matthew',c:11},
-  {r:'Mt 22:37',t:'Amarás al Señor tu Dios con todo tu corazón, y con toda tu alma, y con toda tu mente.',b:'matthew',c:22},
-  {r:'Mt 28:19',t:'Id y haced discípulos a todas las naciones, bautizándolos en el nombre del Padre, del Hijo y del Espíritu Santo.',b:'matthew',c:28},
-  {r:'Jn 1:1',t:'En el principio era el Verbo, y el Verbo era con Dios, y el Verbo era Dios.',b:'john',c:1},
-  {r:'Jn 8:32',t:'Y conoceréis la verdad, y la verdad os hará libres.',b:'john',c:8},
-  {r:'Jn 10:10',t:'Yo he venido para que tengan vida, y para que la tengan en abundancia.',b:'john',c:10},
-  {r:'Jn 11:25',t:'Yo soy la resurrección y la vida; el que cree en mí, aunque esté muerto, vivirá.',b:'john',c:11},
-  {r:'Jn 14:6',t:'Yo soy el camino, y la verdad, y la vida; nadie viene al Padre, sino por mí.',b:'john',c:14},
-  {r:'Jn 15:5',t:'Yo soy la vid, vosotros los pámpanos; el que permanece en mí, y yo en él, este lleva mucho fruto.',b:'john',c:15},
-  {r:'Jn 15:13',t:'Nadie tiene mayor amor que este, que uno ponga su vida por sus amigos.',b:'john',c:15},
-  {r:'Rom 8:28',t:'Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien.',b:'romans',c:8},
-  {r:'Rom 12:2',t:'No os conforméis a este siglo, sino transformaos por medio de la renovación de vuestro entendimiento.',b:'romans',c:12},
-  {r:'1Cor 13:4',t:'El amor es sufrido, es benigno; el amor no tiene envidia, el amor no es jactancioso, no se envanece.',b:'1corinthians',c:13},
-  {r:'1Cor 13:13',t:'Y ahora permanecen la fe, la esperanza y el amor; pero el mayor de ellos es el amor.',b:'1corinthians',c:13},
-  {r:'Gál 5:22',t:'Mas el fruto del Espíritu es: amor, gozo, paz, paciencia, benignidad, bondad, fe, mansedumbre, templanza.',b:'galatians',c:5},
-  {r:'Ef 6:11',t:'Vestíos de toda la armadura de Dios, para que podáis estar firmes contra las asechanzas del diablo.',b:'ephesians',c:6},
-  {r:'Fil 4:7',t:'Y la paz de Dios, que sobrepasa todo entendimiento, guardará vuestros corazones en Cristo Jesús.',b:'philippians',c:4},
-  {r:'Fil 4:13',t:'Todo lo puedo en Cristo que me fortalece.',b:'philippians',c:4},
-  {r:'Heb 11:1',t:'Es pues la fe la certeza de lo que se espera, la convicción de lo que no se ve.',b:'hebrews',c:11},
-  {r:'Stg 1:5',t:'Y si alguno de vosotros tiene falta de sabiduría, pídala a Dios, el cual da a todos abundantemente.',b:'james',c:1},
-  {r:'1Pe 5:7',t:'Echando toda vuestra ansiedad sobre él, porque él tiene cuidado de vosotros.',b:'1peter',c:5},
-  {r:'1Jn 4:8',t:'El que no ama, no ha conocido a Dios; porque Dios es amor.',b:'1john',c:4},
-  {r:'Apoc 21:4',t:'Enjugará Dios toda lágrima de los ojos de ellos; y ya no habrá muerte, ni llanto, ni clamor.',b:'revelation',c:21},
-  {r:'Gén 1:1',t:'En el principio creó Dios los cielos y la tierra.',b:'genesis',c:1},
-  {r:'Sal 46:1',t:'Dios es nuestro amparo y fortaleza, nuestro pronto auxilio en las tribulaciones.',b:'psalms',c:46},
-  {r:'Sal 91:1',t:'El que habita al abrigo del Altísimo morará bajo la sombra del Omnipotente.',b:'psalms',c:91},
-  {r:'Sal 103:1',t:'Bendice, alma mía, al Señor, y bendiga todo mi ser su santo nombre.',b:'psalms',c:103},
-  {r:'Sal 150:6',t:'Todo lo que respira alabe al Señor. ¡Aleluya!',b:'psalms',c:150},
-  {r:'Lc 1:37',t:'Porque nada es imposible para Dios.',b:'luke',c:1},
-  {r:'Lc 6:31',t:'Como queréis que hagan los hombres con vosotros, así también haced vosotros con ellos.',b:'luke',c:6},
-  {r:'2Tim 3:16',t:'Toda la escritura es inspirada divinamente y útil para enseñar, para redargüir, para corregir, para instruir en justicia.',b:'2timothy',c:3},
-];
-
-let srchTimer=null;
-function doSearch(q){
-  clearTimeout(srchTimer);
-  const c=document.getElementById('srchResults');
-  if(!q||q.trim().length<2){c.innerHTML=`<div class="srch-empty">${t('srch_empty')}</div>`;return;}
-  srchTimer=setTimeout(()=>{
-    const qn=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const res=VERSE_INDEX.filter(v=>v.t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(qn));
-    if(!res.length){c.innerHTML=`<div class="srch-empty">Sin resultados para "<em>${q}</em>"</div>`;return;}
-    let html=`<p style="font-family:'Cinzel',serif;font-size:0.7rem;color:rgba(212,175,55,0.42);letter-spacing:0.1em;margin-bottom:0.9rem">${res.length} RESULTADO(S)</p>`;
-    res.forEach(v=>{
-      const hl=v.t.replace(new RegExp(q,'gi'),m=>`<span class="sr-hl">${m}</span>`);
-      html+=`<div class="sr" onclick="goVerse('${v.b}',${v.c})"><div class="sr-ref">${v.r}</div><div class="sr-txt">${hl}</div></div>`;
-    });
-    c.innerHTML=html;
-  },280);
-}
-function goVerse(bookId,ch){
-  const b=ALL_BOOKS.find(x=>x.id===bookId);
-  if(!b) return;
-  S.book=b; S.ch=ch; showPage('bible'); renderBooks(); loadChapter();
-}
-
-// ══════════════════════════════════════════════════════════
-//  LANGUAGE CHANGE
-// ══════════════════════════════════════════════════════════
-function changeLang(lang){
-  S.lang=lang; updateUI();
-  renderBooks(document.getElementById('bookSrch').value);
-  if(document.getElementById('page-bible').classList.contains('active')) loadChapter();
-  if(document.getElementById('page-calendar').classList.contains('active')) renderCal();
-  stopAudio();
-  // Reload voices for new language
-  setTimeout(loadVoices,100);
-}
-
-function updateUI(){
-  const nav=t('nav');
-  document.querySelectorAll('.nav-btn').forEach((b,i)=>{if(nav[i]) b.textContent=nav[i];});
-  document.getElementById('hSub').textContent=t('home_sub');
-  document.getElementById('hSubLine').textContent=t('home_line');
-  document.getElementById('hVerse').textContent=t('hv');
-  document.getElementById('hVerseRef').textContent=t('hr');
-  document.getElementById('hLicense').textContent=`${t('ver')} · Sin derechos de autor`;
-  document.getElementById('bookSrch').placeholder=t('bk_ph');
-  const hc=t('hc'),hcd=t('hcd');
-  ['hc1','hc2','hc3','hc4'].forEach((id,i)=>{document.getElementById(id).textContent=hc[i]||'';});
-  ['hc1d','hc2d','hc3d','hc4d'].forEach((id,i)=>{document.getElementById(id).textContent=hcd[i]||'';});
-  document.getElementById('srchTtl').textContent=t('srch_ttl');
-  document.getElementById('srchIntro').textContent=t('srch_intro');
-  document.getElementById('srchInput').placeholder=t('srch_ph');
-  const se=document.getElementById('srchEmpty');if(se) se.textContent=t('srch_empty');
-}
-
-// ══════════════════════════════════════════════════════════
-//  SISTEMA DE ANUNCIOS (sin opción de compra premium)
-// ══════════════════════════════════════════════════════════
-const ADS = {
-  isPremium: false,
-  chaptersSinceAd: 0,
-  INTERSTITIAL_EVERY: 3,
-  interstitialTimer: null,
-  countdownSec: 5,
-};
-
-function initPremium(){ /* sin compra premium */ }
-function applyPremiumState(){ }
-
-function onBannerLoaded(){
-  const c = document.getElementById('adBannerContent');
-  if(c) c.style.opacity = '0';
-}
-
-function checkInterstitialTrigger(){
-  ADS.chaptersSinceAd++;
-  if(ADS.chaptersSinceAd >= ADS.INTERSTITIAL_EVERY){
-    ADS.chaptersSinceAd = 0;
-    setTimeout(showInterstitial, 800);
-  }
-}
-
-function showInterstitial(){
-  const overlay = document.getElementById('adInterstitialOverlay');
-  const closeBtn = document.getElementById('adCloseBtn');
-  const skipBtn = document.getElementById('adSkipBtn');
-  const secSpan = document.getElementById('adSeconds');
-  if(!overlay) return;
-
-  overlay.classList.remove('hidden');
-  closeBtn.classList.add('disabled');
-  skipBtn.classList.add('disabled');
-
-  let secs = ADS.countdownSec;
-  if(secSpan) secSpan.textContent = secs;
-  document.getElementById('adTimer').style.display = '';
-
-  clearInterval(ADS.interstitialTimer);
-  ADS.interstitialTimer = setInterval(()=>{
-    secs--;
-    if(secSpan) secSpan.textContent = secs;
-    if(secs <= 0){
-      clearInterval(ADS.interstitialTimer);
-      closeBtn.classList.remove('disabled');
-      skipBtn.classList.remove('disabled');
-      skipBtn.textContent = 'Continuar →';
-      document.getElementById('adTimer').style.display = 'none';
+    // ─── WAKE LOCK ────────────────────────────
+    let wakeLock = null;
+    async function requestWakeLock() {
+      if (!("wakeLock" in navigator)) return;
+      try { wakeLock = await navigator.wakeLock.request("screen"); } catch(e) {}
     }
-  }, 1000);
-
-  if(window.AndroidBridge && window.AndroidBridge.showInterstitial){
-    window.AndroidBridge.showInterstitial();
-  }
-}
-
-function closeInterstitial(){
-  const overlay = document.getElementById('adInterstitialOverlay');
-  if(overlay) overlay.classList.add('hidden');
-  clearInterval(ADS.interstitialTimer);
-}
-
-// Stubs (no purchase modal)
-function openPurchaseModal(){ }
-function closePurchaseModal(){ }
-
-window.VerbumApp = window.VerbumApp || {};
-window.VerbumApp.onBannerLoaded = onBannerLoaded;
-window.VerbumApp.hideBannerHTML = ()=>{ const c=document.getElementById('adBannerContent'); if(c) c.style.display='none'; };
-window.VerbumApp.showInterstitialHTML = showInterstitial;
-
-// ══════════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded',()=>{
-  const n=new Date();
-  S.calY=n.getFullYear(); S.calM=n.getMonth(); S.calD=n.getDate();
-  renderBooks(); updateUI();
-
-  // Load voices
-  if(window.speechSynthesis){
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged=loadVoices;
-  }
-
-  // Init monetization (lee localStorage para saber si es premium)
-  initPremium();
-
-  // ── Intersticial al arrancar ─────────────────────────────
-  // Espera 1.2s para que el contenido cargue antes de mostrar el anuncio
-  if(!ADS.isPremium){
-    setTimeout(showInterstitial, 1200);
-  }
-});
-
-// Voice selector change
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('voiceSel').addEventListener('change',function(){
-    S.selectedVoice=S.allVoices.find(v=>v.name===this.value)||null;
-    if(S.speaking){stopAudio();setTimeout(startAudio,100);}
-  });
-});
-</script>
+    function releaseWakeLock() {
+      if (wakeLock) { wakeLock.release(); wakeLock = null; }
+    }
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && isOn) requestWakeLock();
+    });
+    const _origToggle = toggleLight;
+    toggleLight = function () {
+      _origToggle();
+      if (isOn) requestWakeLock(); else releaseWakeLock();
+    };
+  </script>
 </body>
 </html>
