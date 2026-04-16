@@ -90,14 +90,6 @@
   .alert.error{background:#fff0f0;border:2px solid var(--red);color:var(--red);display:block;}
   .alert.info{background:#f0f8ff;border:2px solid var(--blue);color:var(--blue);display:block;}
 
-  .file-section{background:#f8f9ff;border-radius:16px;padding:15px;margin-bottom:18px;border:2px dashed #c0c8f0;}
-  .file-section > label{font-weight:700;font-size:.9rem;color:var(--purple);margin-bottom:7px;display:block;}
-  .file-drop-area{border:3px dashed #c8d0f0;border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:all .2s;background:white;color:#888;font-weight:600;font-size:.9rem;}
-  .file-drop-area:hover{border-color:var(--purple);background:#f8f0ff;color:var(--purple);}
-  .file-drop-area.loaded{border-color:var(--green);background:#f0fff8;color:var(--green);}
-  .file-drop-area input[type=file]{display:none;}
-  .file-hint{font-size:.76rem;color:#aaa;margin-top:5px;text-align:center;}
-
   hr.divider{border:none;border-top:3px dashed #ebebeb;margin:18px 0;}
 
   /* WAIT */
@@ -181,15 +173,6 @@
   <div class="card">
     <div class="logo">🌈 Divertiviaje!</div>
     <div class="subtitle">¡El concurso de preguntas más divertido! 🎉</div>
-
-    <div class="file-section">
-      <label>📂 Archivo de preguntas (preguntas.json)</label>
-      <div class="file-drop-area" id="fileDropArea" onclick="document.getElementById('fileInput').click()">
-        <div id="fileDropText">📄 Haz clic aquí o arrastra el archivo <strong>preguntas.json</strong></div>
-        <input type="file" id="fileInput" accept=".json" onchange="loadQuestionsFile(this)">
-      </div>
-      <div class="file-hint">Pon <b>preguntas.json</b> en la misma carpeta que este HTML. Si abres desde un servidor local se cargará automáticamente.</div>
-    </div>
 
     <div id="alertMsg" class="alert"></div>
 
@@ -380,19 +363,10 @@ window.addEventListener('load', () => {
   loadVoices();
   window.speechSynthesis.onvoiceschanged = loadVoices;
 
-  const dropArea = document.getElementById('fileDropArea');
-  dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.style.borderColor='var(--purple)'; });
-  dropArea.addEventListener('dragleave', () => { dropArea.style.borderColor=''; });
-  dropArea.addEventListener('drop', e => {
-    e.preventDefault(); dropArea.style.borderColor='';
-    if (e.dataTransfer.files[0]) parseJSONFile(e.dataTransfer.files[0]);
-  });
-
-  // Auto-carga si están en el mismo directorio (servidor local)
   fetch('preguntas.json')
-    .then(r => r.ok ? r.json() : null)
-    .then(d => { if (d) applyQuestions(d); })
-    .catch(() => {});
+    .then(r => { if(!r.ok) throw new Error('no encontrado'); return r.json(); })
+    .then(d => applyQuestions(d))
+    .catch(() => showAlert('No se encontró preguntas.json. Asegúrate de que está en la misma carpeta y abre el HTML desde un servidor local.','error'));
 });
 
 function loadVoices(){
@@ -403,28 +377,11 @@ function loadVoices(){
 // =====================================================
 // CARGA JSON
 // =====================================================
-function loadQuestionsFile(input){ if(input.files[0]) parseJSONFile(input.files[0]); }
-
-function parseJSONFile(file){
-  const reader = new FileReader();
-  reader.onload = e => {
-    try { applyQuestions(JSON.parse(e.target.result)); }
-    catch { showAlert('El archivo no es un JSON válido.','error'); }
-  };
-  reader.readAsText(file);
-}
-
 function applyQuestions(data){
   if(!data.facil||!data.media||!data.dificil){
     showAlert('El JSON debe tener las claves: "facil", "media" y "dificil".','error'); return;
   }
   state.questionsDB = data;
-  const total = data.facil.length+data.media.length+data.dificil.length;
-  const d = document.getElementById('fileDropArea');
-  d.classList.add('loaded');
-  document.getElementById('fileDropText').innerHTML =
-    `✅ Cargadas <strong>${total}</strong> preguntas · ${data.facil.length} fáciles · ${data.media.length} medias · ${data.dificil.length} difíciles`;
-  showAlert('','');
 }
 
 // =====================================================
