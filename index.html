@@ -90,6 +90,9 @@
   .alert.error{background:#fff0f0;border:2px solid var(--red);color:var(--red);display:block;}
   .alert.info{background:#f0f8ff;border:2px solid var(--blue);color:var(--blue);display:block;}
 
+  .tiebreak-chip{background:linear-gradient(135deg,#fff0f8,#fff);border:3px solid var(--pink);border-radius:16px;padding:10px 18px;font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--pink);display:inline-flex;align-items:center;gap:6px;}
+  .game-round-badge.tiebreak{background:linear-gradient(135deg,var(--red),var(--pink));animation:chipPulse 1s ease infinite;}
+
   hr.divider{border:none;border-top:3px dashed #ebebeb;margin:18px 0;}
 
   /* WAIT */
@@ -263,6 +266,21 @@
   </div>
 </div>
 
+<!-- ====== DESEMPATE ====== -->
+<div class="screen" id="screen-tiebreak">
+  <div class="card" style="text-align:center;max-width:680px">
+    <div style="font-size:3rem;margin-bottom:8px">⚔️</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:2rem;color:var(--pink);margin-bottom:8px" id="tiebreakTitle">¡Ronda de Desempate!</div>
+    <div style="font-size:1rem;color:#777;font-weight:600;margin-bottom:20px" id="tiebreakSubtitle">Están igualados. ¡Una pregunta decide el ganador!</div>
+    <div class="narrator-comment visible" id="tiebreakComment" style="text-align:left;margin-bottom:20px">
+      <div class="nar-avatar" id="tiebreakNarAvatar">🎩</div>
+      <div class="nar-text" id="tiebreakCommentText">¡Empate!</div>
+    </div>
+    <div id="tiebreakPlayers" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:20px"></div>
+    <button class="btn btn-primary" onclick="startTiebreakRound()">⚔️ ¡Al desempate!</button>
+  </div>
+</div>
+
 <!-- ====== RESULTADOS ====== -->
 <div class="screen" id="screen-results">
   <div class="card">
@@ -292,19 +310,32 @@ const state = {
   currentRound:1, currentPlayerIdx:0, scores:[],
   usedQuestions:{ facil:new Set(), media:new Set(), dificil:new Set() },
   currentQuestion:null, answered:false,
-  ttsRate:0.95, ttsPitch:1.1, bestVoice:null,
+  ttsRate:0.95, ttsPitch:1.1,
   questionsDB:null, roundAnswers:[],
+  // desempate
+  tiebreakMode:false, tiebreakPlayers:[], tiebreakScores:[],
+  tiebreakRound:1,
 };
 
 const AVATARS = ['🐯','🦊','🐸','🦄','🐼','🦁','🐨','🐮'];
 
+// Perfiles de voz por narrador:
+// preferGender: 'female'|'male'|'any'
+// pitch y rate son MULTIPLICADORES sobre el valor base del usuario
+// names: palabras clave para buscar en nombres de voces del sistema
 const NARRATORS = [
-  {name:'Don Trivia',icon:'🎩'},
-  {name:'El Héroe',  icon:'🦸'},
-  {name:'El Mago',   icon:'🧙'},
-  {name:'RoboCuiz',  icon:'🤖'},
-  {name:'La Reina',  icon:'👸'},
-  {name:'Loro Listo',icon:'🦜'},
+  { name:'Don Trivia', icon:'🎩', preferGender:'male',   pitch:0.85, rate:0.90,
+    names:['jorge','pablo','diego','carlos','juan','male','hombre','man'] },
+  { name:'El Héroe',   icon:'🦸', preferGender:'male',   pitch:1.05, rate:1.15,
+    names:['jorge','pablo','diego','male','man','hombre'] },
+  { name:'El Mago',    icon:'🧙', preferGender:'male',   pitch:0.80, rate:0.82,
+    names:['jorge','pablo','carlos','male','man'] },
+  { name:'RoboCuiz',   icon:'🤖', preferGender:'male',   pitch:0.70, rate:1.05,
+    names:['jorge','pablo','male','man'] },
+  { name:'La Reina',   icon:'👸', preferGender:'female', pitch:1.20, rate:0.88,
+    names:['mónica','monica','paloma','lucia','lucía','female','mujer','woman','laura','maria','maría'] },
+  { name:'Loro Listo', icon:'🦜', preferGender:'female', pitch:1.45, rate:1.20,
+    names:['mónica','monica','paloma','lucia','lucía','female','mujer','woman','laura'] },
 ];
 
 // Comentarios locales por narrador, tipo de respuesta y fin de ronda/juego
@@ -315,6 +346,7 @@ const COMMENTS = [
     ko:['Esa respuesta no figura en ninguna enciclopedia conocida.','¡Incorrecto! Hasta los sabios tropiezan con el conocimiento a veces.','La respuesta correcta y la tuya se parecen como un libro y una pelota.','¡Error! Recuerde: el fracaso es el primer escalón de la sabiduría.','No, no... Aprecio el atrevimiento, pero la respuesta era otra.','Me temo que los tomos de la sabiduría no os acompañan hoy.'],
     ronda:['¡Ronda concluida! El marcador manda. Los resultados son… pintorescos.','¡Otra ronda! Quien lidera saborea la gloria; quien va último necesita más libros.','Cerramos ronda con resultados que merecen análisis profundo. O quizás no tanto.'],
     final:['¡El certamen ha concluido! Ha sido un espectáculo de sabiduría y profunda reflexión.','¡Fin del gran certamen! Que el ganador reciba honores y el resto, bibliografía recomendada.'],
+    empate:['¡Extraordinario! Tenemos un empate digno de los anales de la historia. ¡Procede la ronda de desempate!','¡Señoras y señores, el marcador está igualado! Solo una pregunta más decidirá quién es el más sabio.','¡Un empate! Fascinante. Como bien dice la academia: cuando dos mentes se igualan, solo el saber supremo las separa.'],
   },
   // 1 El Héroe
   {
@@ -322,6 +354,7 @@ const COMMENTS = [
     ko:['¡El villano del error te ha ganado esta vez! ¡Pero los héroes se levantan!','¡Noooo! ¡Esa no era la respuesta! ¡El concurso necesita más entrenamiento!','Todo héroe tiene su kryptonita... y esta pregunta era la tuya.','¡Error épico! Pero hasta el Hombre de Acero necesitó práctica.','¡La respuesta incorrecta ha atacado! ¡Pero el héroe aprende de cada batalla!','¡Caída detectada! Un héroe siempre vuelve más fuerte. ¡Ánimo!'],
     ronda:['¡Ronda superada! ¡El equipo sigue en pie! ¡Nadie baje la guardia!','¡Fin de ronda! Los puntos están en juego y la épica batalla continúa.','¡Increíble ronda, guerreros! El marcador es tan emocionante como una batalla final.'],
     final:['¡El gran torneo ha terminado! ¡Un campeón emerge entre los valientes!','¡ÉPICO! ¡El concurso más heroico de la historia! ¡Todos sois campeones!'],
+    empate:['¡EMPATE ÉPICO! ¡Dos héroes igualados! ¡Solo una pregunta final decidirá quién salva el mundo!','¡No puede ser! ¡El marcador está igualado! ¡Ronda de desempate, guerreros! ¡Que gane el más valiente!','¡ALARMA DE EMPATE ACTIVADA! ¡Necesitamos una última batalla para encontrar al campeón supremo!'],
   },
   // 2 El Mago
   {
@@ -329,6 +362,7 @@ const COMMENTS = [
     ko:['El espejo mágico dice… ¡que no! Los hechizos del error te han afectado.','¡Misterio de los misterios! Esa respuesta no estaba en el libro de los saberes.','Los pergaminos de la verdad discrepan contigo. ¡Incorrecto!','¡El caldero burbujeó en señal de error! Las pociones del conocimiento aún pueden salvarte.','Los cristales del saber no se han alineado esta vez. El universo conspira… para que estudies más.','¡El hechizo falló! Pero todo mago aprende de sus errores.'],
     ronda:['La bola de cristal revela los resultados… ¡fascinantes como un hechizo!','El pergamino mágico registra los puntos. ¡El destino es emocionante!','¡Los magos han completado otra ronda! Los conjuros del conocimiento han hablado.'],
     final:['¡El gran hechizo ha terminado! ¡El ganador fue elegido por las estrellas del saber!','¡Que el destino sea revelado! ¡Un campeón emerge del encantado mundo del conocimiento!'],
+    empate:['¡Las estrellas han hablado… y dicen EMPATE! Los hados exigen una última prueba mágica para revelar al verdadero sabio.','¡Oh, poderoso empate! La bola de cristal se ha nublado. Solo una pregunta más despejará el misterio.','¡Por todos los calderos del mundo! ¡Un empate! El grimorio del destino ordena una ronda de desempate.'],
   },
   // 3 RoboCuiz
   {
@@ -336,6 +370,7 @@ const COMMENTS = [
     ko:['ERROR 404: RESPUESTA CORRECTA NO ENCONTRADA EN TU SISTEMA. REINSTALAR CONOCIMIENTO.','DATO INCORRECTO. SISTEMA REQUIERE ACTUALIZACIÓN. REINTENTAR. BEEP BOOP.','FALLO EN EL MÓDULO DE RESPUESTAS. DIAGNÓSTICO: NECESITAS ESTUDIAR MÁS.','RESULTADO: ERROR CRÍTICO. SUGERENCIA: LEER MÁS ENCICLOPEDIAS DIGITALES. BEEEP.','INCORRECTO. UNIDAD DE VERGÜENZA ACTIVADA... LEVEMENTE. LOS ROBOTS NO JUZGAN. BEEP.','RESPUESTA INVÁLIDA DETECTADA. PROCESANDO SOLUCIÓN ALTERNATIVA... NO ENCONTRADA.'],
     ronda:['FIN DE RONDA. CALCULANDO PUNTUACIONES. PROCESANDO... RESULTADOS DISPONIBLES.','RONDA COMPLETADA. ESTADÍSTICAS ACTUALIZADAS EN SERVIDOR CENTRAL. CONTINUAR PROTOCOLO.','ANÁLISIS DE RONDA: HUMANOS HAN DEMOSTRADO VARIADOS NIVELES DE CONOCIMIENTO. DATOS REGISTRADOS.'],
     final:['CONCURSO FINALIZADO. CAMPEÓN IDENTIFICADO. PROCESANDO CELEBRACIÓN. CALCULANDO CONFETI.','PROTOCOLO DE JUEGO COMPLETADO. GANADOR DETERMINADO POR ALGORITMO. BEEP BOOP. FIN.'],
+    empate:['ALERTA: EMPATE DETECTADO. PUNTUACIONES IDÉNTICAS. INICIANDO PROTOCOLO DE DESEMPATE. BEEP BOOP.','ERROR DE RESOLUCIÓN: DOS O MÁS HUMANOS CON MISMA PUNTUACIÓN. SOLUCIÓN: RONDA ADICIONAL. EJECUTANDO.','SISTEMA DE DESEMPATE ACTIVADO. CALCULANDO PREGUNTA DEFINITIVA. POR FAVOR ESPERE. BEEEEP.'],
   },
   // 4 La Reina
   {
@@ -343,6 +378,7 @@ const COMMENTS = [
     ko:['Querido mío… Esa respuesta no es digna de mi corte. Mis damas se tapan los ojos.','¡Incorrecto! Me temo que retiro la invitación al baile real por esta respuesta.','En mi reino educamos mejor a los súbditos. ¡Pero os doy una segunda oportunidad!','¡Error real! Aunque reconozco el atrevimiento. La osadía también es virtud en palacio.','¡Respuesta equivocada! Mi mayordomo ha suspirado profundamente. Esperamos más de vos.','¡Oh, no, no, no! Hasta el bufón real lo sabía. Ánimo, súbdito.'],
     ronda:['¡Otra ronda concluida en el gran torneo real! Los puntos reflejan la nobleza intelectual.','El marcador real ha sido actualizado. ¡El banquete aguarda al ganador!','¡Ronda terminada con toda la elegancia que merece mi torneo! Los resultados son regios.'],
     final:['¡El gran torneo real ha concluido! Un súbdito ha demostrado ser digno de la corona.','¡Proclamo al ganador de mi torneo! ¡Que la celebración real comience!'],
+    empate:['¡Oh, cielos! ¡Un empate en mi torneo real! Esto es… inesperado. Procederemos con elegancia a la ronda de desempate.','¡Jamás en la historia de mi reino se había visto tal igualdad! Solo una pregunta más podrá coronar al verdadero campeón.','¡Empate real! Mi mayordomo ha desmayado de la emoción. Habrá ronda de desempate. ¡Que comience la última batalla!'],
   },
   // 5 Loro Listo
   {
@@ -350,6 +386,7 @@ const COMMENTS = [
     ko:['¡No, no, no! ¡Loro Listo no puede creerlo! ¡Hasta el loro lo sabía! ¡Aaawk!','¡Error, error! ¡El loro sabe más! ¡Aaawk! ¡Ay, ay, ay!','¡Incorrecto, incorrecto! ¡El loro se tapa los ojos con las alas!','¡Nooo! ¡Aaawk! ¡Loro Listo llora una lágrima de loro! ¡Estudia más, estudia!','¡Mal, mal, mal! ¡Eso no lo diría ni un loro! ¡Y los loros repetimos de todo!','¡Aaawk! ¡Fallaste! ¡Hasta los loros se equivocan menos! ¡Vamos, vamos!'],
     ronda:['¡Ronda terminada, terminada! ¡Aaawk! ¡El loro anota los puntos con la pata!','¡Fin de ronda, fin de ronda! ¡Quien va primero que siga así! ¡Aaawk!','¡Ronda acabada! ¡Loro Listo está emocionado! ¡Aaawk! ¡Los puntos, los puntos!'],
     final:['¡Juego terminado, terminado! ¡Aaawk! ¡Hay un ganador! ¡El loro baila y baila!','¡Final, final! ¡Loro Listo proclama al campeón! ¡Aaawk! ¡Galletas para todos!'],
+    empate:['¡Empate, empate! ¡Aaawk! ¡El loro no da crédito! ¡Igualados, igualados! ¡Habrá ronda extra!','¡No, no, no! ¡Empate! ¡Aaawk! ¡El loro necesita más semillas para soportar esto! ¡Pregunta de desempate!','¡Aaawk! ¡Empate! ¡Loro Listo se cae de la percha de la emoción! ¡Una más, una más!'],
   },
 ];
 
@@ -369,9 +406,71 @@ window.addEventListener('load', () => {
     .catch(() => showAlert('No se encontró preguntas.json. Asegúrate de que está en la misma carpeta y abre el HTML desde un servidor local.','error'));
 });
 
+// Cache de voces por narrador (se rellena lazy)
+const voiceCache = {};
+
+function getAllVoices(){
+  return window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+}
+
 function loadVoices(){
-  const vs = window.speechSynthesis.getVoices();
-  state.bestVoice = vs.find(v=>v.lang.startsWith('es')) || vs[0] || null;
+  // Limpiar cache al recibir nuevas voces
+  Object.keys(voiceCache).forEach(k => delete voiceCache[k]);
+}
+
+// Elige la mejor voz del sistema para un narrador dado
+function selectVoiceForNarrator(narIdx){
+  if(voiceCache[narIdx]) return voiceCache[narIdx];
+
+  const voices = getAllVoices();
+  if(!voices.length) return null;
+
+  const nar = NARRATORS[narIdx];
+
+  // 1. Voces en español
+  const esVoices = voices.filter(v => v.lang.startsWith('es'));
+  const pool = esVoices.length ? esVoices : voices;
+
+  // 2. Intentar casar por nombre de voz con las palabras clave del narrador
+  const nameLower = pool.map(v => ({ v, n: v.name.toLowerCase() }));
+  for(const kw of nar.names){
+    const match = nameLower.find(({n}) => n.includes(kw));
+    if(match){ voiceCache[narIdx] = match.v; return match.v; }
+  }
+
+  // 3. Filtrar por género inferido del nombre de voz
+  if(nar.preferGender !== 'any'){
+    const femaleKw = ['mónica','monica','paloma','lucia','lucía','laura','maria','maría','female','woman','mujer','elena','rosa'];
+    const maleKw   = ['jorge','pablo','diego','carlos','juan','male','man','hombre','antonio','miguel'];
+    const kwList   = nar.preferGender === 'female' ? femaleKw : maleKw;
+    for(const kw of kwList){
+      const match = nameLower.find(({n}) => n.includes(kw));
+      if(match){ voiceCache[narIdx] = match.v; return match.v; }
+    }
+  }
+
+  // 4. Fallback: primera voz en español o la primera disponible
+  const fallback = pool[0];
+  voiceCache[narIdx] = fallback;
+  return fallback;
+}
+
+function speak(text, narIdxOverride){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+
+  const narIdx = narIdxOverride !== undefined ? narIdxOverride : state.narratorIdx;
+  const nar    = NARRATORS[narIdx];
+  const voice  = selectVoiceForNarrator(narIdx);
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang  = 'es-ES';
+  // Aplicar perfil del narrador sobre los valores base del usuario
+  u.rate  = Math.min(2, Math.max(0.5, state.ttsRate  * nar.rate));
+  u.pitch = Math.min(2, Math.max(0.1, state.ttsPitch * nar.pitch));
+  if(voice) u.voice = voice;
+
+  window.speechSynthesis.speak(u);
 }
 
 // =====================================================
@@ -478,7 +577,11 @@ function showWaitScreen(){
   setTimeout(()=>speak(`${p.name}, ¡es tu turno! Prepárate.`),400);
 }
 
-function readyToPlay(){ showScreen('screen-game'); loadQuestion(); }
+function readyToPlay(){
+  showScreen('screen-game');
+  if(state.tiebreakMode) loadTiebreakQuestion();
+  else loadQuestion();
+}
 
 // =====================================================
 // PANTALLA JUEGO
@@ -490,6 +593,7 @@ function loadQuestion(){
   state.answered=false;
 
   document.getElementById('roundBadge').textContent=`Ronda ${state.currentRound}/${state.rounds}`;
+  document.getElementById('roundBadge').className='game-round-badge';
   const badge=document.getElementById('diffBadge');
   badge.textContent=getDiffLabel(diff); badge.className='difficulty-badge '+getDiffClass(diff);
 
@@ -565,14 +669,21 @@ function showNarratorComment(text){
 // =====================================================
 function nextTurn(){
   document.getElementById('nextBtn').style.display='none';
+
+  if(state.tiebreakMode){
+    nextTiebreakTurn(); return;
+  }
+
   state.currentPlayerIdx++;
 
   if(state.currentPlayerIdx>=state.players.length){
     state.currentPlayerIdx=0;
 
-    if(state.currentRound>=state.rounds){ showFinalResults(); return; }
+    if(state.currentRound>=state.rounds){
+      checkForTieOrFinish(); return;
+    }
 
-    // Comentario de fin de ronda
+    // Comentario fin de ronda
     const comment=pick(COMMENTS[state.narratorIdx].ronda);
     const leader=state.players[state.scores.indexOf(Math.max(...state.scores))].name;
     const scoreStr=state.players.map((p,i)=>`${p.name}: ${state.scores[i]}`).join(', ');
@@ -583,6 +694,164 @@ function nextTurn(){
     setTimeout(()=>showWaitScreen(),3500);
   } else {
     showWaitScreen();
+  }
+}
+
+// Detecta empate entre los primeros y lanza desempate o resultados
+function checkForTieOrFinish(){
+  const maxScore = Math.max(...state.scores);
+  const tiedIdxs = state.players
+    .map((_,i)=>i)
+    .filter(i=>state.scores[i]===maxScore);
+
+  if(tiedIdxs.length>1){
+    showTiebreakScreen(tiedIdxs);
+  } else {
+    showFinalResults();
+  }
+}
+
+// =====================================================
+// DESEMPATE
+// =====================================================
+function showTiebreakScreen(tiedIdxs){
+  state.tiebreakMode    = true;
+  state.tiebreakPlayers = tiedIdxs;
+  state.tiebreakScores  = Object.fromEntries(tiedIdxs.map(i=>[i,0]));
+  state.tiebreakRound   = 1;
+  state.currentPlayerIdx = 0; // dentro de tiebreakPlayers
+
+  const nar = NARRATORS[state.narratorIdx];
+  const comment = pick(COMMENTS[state.narratorIdx].empate);
+  const names = tiedIdxs.map(i=>state.players[i].name).join(' y ');
+
+  document.getElementById('tiebreakNarAvatar').textContent = nar.icon;
+  document.getElementById('tiebreakCommentText').textContent = comment;
+  document.getElementById('tiebreakTitle').textContent = '⚔️ ¡Ronda de Desempate!';
+  document.getElementById('tiebreakSubtitle').textContent =
+    `${names} están igualados con ${Math.max(...state.scores)} puntos. ¡Una pregunta decide el campeón!`;
+
+  document.getElementById('tiebreakPlayers').innerHTML = tiedIdxs.map(i=>`
+    <div class="tiebreak-chip">${state.players[i].avatar} ${state.players[i].name}</div>`).join('');
+
+  showScreen('screen-tiebreak');
+  setTimeout(()=>speak(comment),400);
+}
+
+function startTiebreakRound(){
+  state.currentPlayerIdx=0;
+  showTiebreakWait();
+}
+
+function showTiebreakWait(){
+  const realIdx = state.tiebreakPlayers[state.currentPlayerIdx];
+  const p = state.players[realIdx];
+  document.getElementById('waitAvatar').textContent = p.avatar;
+  document.getElementById('waitPlayerName').textContent = p.name;
+  document.getElementById('waitMsg').textContent = `⚔️ Desempate · Ronda ${state.tiebreakRound}. ¡Prepárate, ${p.name}!`;
+  showScreen('screen-wait');
+  setTimeout(()=>speak(`${p.name}, ¡es tu turno de desempate! Prepárate.`),400);
+}
+
+function readyToPlayTiebreak(){
+  showScreen('screen-game');
+  loadTiebreakQuestion();
+}
+
+function loadTiebreakQuestion(){
+  const realIdx = state.tiebreakPlayers[state.currentPlayerIdx];
+  const p = state.players[realIdx];
+  const diff = getDiff(p.age);
+  state.currentQuestion = getQuestion(diff);
+  state.answered = false;
+
+  // Badge especial desempate
+  const rb = document.getElementById('roundBadge');
+  rb.textContent = `⚔️ Desempate R${state.tiebreakRound}`;
+  rb.className = 'game-round-badge tiebreak';
+
+  const badge = document.getElementById('diffBadge');
+  badge.textContent = getDiffLabel(diff); badge.className = 'difficulty-badge '+getDiffClass(diff);
+
+  renderTiebreakScoresMini();
+  document.getElementById('currentAvatar').textContent = p.avatar;
+  document.getElementById('currentPlayerName').textContent = p.name;
+  document.getElementById('currentPlayerAge').textContent = `${p.age} años · ⚔️ Desempate`;
+  document.getElementById('questionText').textContent = state.currentQuestion.pregunta;
+
+  const letters=['A','B','C','D'];
+  document.getElementById('optionsGrid').innerHTML=state.currentQuestion.opciones.map((opt,i)=>`
+    <button class="option-btn" id="opt${i}" onclick="selectTiebreakOption(${i})">
+      <span class="opt-letter">${letters[i]}</span>${opt}
+    </button>`).join('');
+
+  document.getElementById('narratorComment').classList.remove('visible');
+  document.getElementById('nextBtn').style.display='none';
+  document.getElementById('commentNarAvatar').textContent=NARRATORS[state.narratorIdx].icon;
+  setTimeout(()=>speakQuestion(),500);
+}
+
+function renderTiebreakScoresMini(){
+  document.getElementById('scoresMini').innerHTML=state.tiebreakPlayers.map((ri,ci)=>{
+    const p=state.players[ri];
+    return `<div class="score-chip ${ci===state.currentPlayerIdx?'current-player':''}">
+      ${p.avatar} ${p.name} <span class="score-val">${state.tiebreakScores[ri]}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectTiebreakOption(idx){
+  if(state.answered) return;
+  state.answered=true;
+  const realIdx=state.tiebreakPlayers[state.currentPlayerIdx];
+  const correct=idx===state.currentQuestion.respuesta;
+  if(correct) state.tiebreakScores[realIdx]++;
+
+  document.querySelectorAll('.option-btn').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===state.currentQuestion.respuesta) b.classList.add('correct');
+    else if(i===idx&&!correct) b.classList.add('wrong');
+  });
+  renderTiebreakScoresMini();
+
+  const comment=pick(correct?COMMENTS[state.narratorIdx].ok:COMMENTS[state.narratorIdx].ko);
+  showNarratorComment(comment);
+
+  const p=state.players[realIdx];
+  const correctText=state.currentQuestion.opciones[state.currentQuestion.respuesta];
+  const resultText=correct?`¡Correcto, ${p.name}!`:`Incorrecto. La respuesta era: ${correctText}.`;
+  setTimeout(()=>speak(resultText),200);
+
+  document.getElementById('nextBtn').style.display='block';
+}
+
+function nextTiebreakTurn(){
+  state.currentPlayerIdx++;
+
+  if(state.currentPlayerIdx>=state.tiebreakPlayers.length){
+    // Fin de ronda de desempate: ¿hay nuevo empate entre los desempatadores?
+    const maxTie=Math.max(...state.tiebreakPlayers.map(i=>state.tiebreakScores[i]));
+    const newTied=state.tiebreakPlayers.filter(i=>state.tiebreakScores[i]===maxTie);
+
+    if(newTied.length>1){
+      // Sigue el empate: nueva ronda de desempate entre los mismos (o menos)
+      state.tiebreakPlayers=newTied;
+      state.tiebreakScores=Object.fromEntries(newTied.map(i=>[i,0]));
+      state.tiebreakRound++;
+      state.currentPlayerIdx=0;
+      const comment=pick(COMMENTS[state.narratorIdx].empate);
+      speak(`¡Increíble! ¡Siguen empatados! ${comment} ¡Otra ronda de desempate!`);
+      setTimeout(()=>showTiebreakWait(),3500);
+    } else {
+      // Hay ganador del desempate: mezclar puntuaciones para resultados finales
+      // El ganador del tiebreak gana el puesto 1
+      state.tiebreakMode=false;
+      // Sumar puntos de desempate a los scores principales para el ranking
+      state.tiebreakPlayers.forEach(i=>{ state.scores[i]+=state.tiebreakScores[i]; });
+      showFinalResults();
+    }
+  } else {
+    showTiebreakWait();
   }
 }
 
@@ -627,22 +896,14 @@ function playAgain(){
   state.currentRound=1; state.currentPlayerIdx=0;
   state.usedQuestions={facil:new Set(),media:new Set(),dificil:new Set()};
   state.roundAnswers=[];
+  state.tiebreakMode=false; state.tiebreakPlayers=[]; state.tiebreakScores={}; state.tiebreakRound=1;
   stopConfetti();
   showWaitScreen();
 }
 
-function goSetup(){ stopConfetti(); showScreen('screen-setup'); }
-
-// =====================================================
-// TTS
-// =====================================================
-function speak(text){
-  if(!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang='es-ES'; u.rate=state.ttsRate; u.pitch=state.ttsPitch;
-  if(state.bestVoice) u.voice=state.bestVoice;
-  window.speechSynthesis.speak(u);
+function goSetup(){
+  state.tiebreakMode=false;
+  stopConfetti(); showScreen('screen-setup');
 }
 
 // =====================================================
