@@ -103,8 +103,8 @@
     * { box-sizing: border-box; }
 
     :root {
-      --sky-day:   linear-gradient(160deg, #a8c8f0 0%, #dbe9f8 60%, #f0f4f8 100%);
-      --sky-night: linear-gradient(160deg, #0d1b3e 0%, #1a2d5a 60%, #243b6e 100%);
+      --sky-day:   linear-gradient(160deg, #bae6fd 0%, #e0f2fe 55%, #f0f9ff 100%);
+      --sky-night: linear-gradient(160deg, #bae6fd 0%, #e0f2fe 55%, #f0f9ff 100%);
       --sky-dawn:  linear-gradient(160deg, #f7b97a 0%, #f6cfb0 50%, #dce8f5 100%);
       --sky-storm: linear-gradient(160deg, #555f70 0%, #8a95a0 60%, #b0bac3 100%);
     }
@@ -198,9 +198,9 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.15);
     }
     .lang-btn:not(.active):hover { background: rgba(255,255,255,0.6); }
-    body.night .lang-toggle { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
-    body.night .lang-btn { color: #94a3b8; }
-    body.night .lang-btn.active { background: #e2e8f0; color: #1e293b; }
+    /* noche lang-toggle: igual que día */
+    
+    
 
     /* ── Card & common ── */
     .card {
@@ -208,20 +208,14 @@
       border: 1px solid rgba(255,255,255,0.7); border-radius: 2rem;
       box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
     }
-    body.night .card { background: rgba(10,20,50,0.55); border-color: rgba(255,255,255,0.1); }
+    /* noche .card: igual que día */
 
     .temp-display {
       font-family: 'DM Serif Display', serif;
       font-size: clamp(4.5rem,18vw,7.5rem); line-height: 1; letter-spacing: -3px;
     }
 
-    body.night .text-slate-800 { color: #e2e8f0; }
-    body.night .text-slate-700 { color: #cbd5e1; }
-    body.night .text-slate-600 { color: #b0bec5; }
-    body.night .text-slate-500 { color: #94a3b8; }
-    body.night .text-slate-400 { color: #64748b; }
-    body.night input { background: rgba(255,255,255,0.06); color: #e2e8f0; border-color: rgba(255,255,255,0.1); }
-    body.night input::placeholder { color: #475569; }
+    /* noche = mismo fondo azul claro → colores de texto igual que día */
     input:focus { outline: none; box-shadow: 0 0 0 2px rgba(148,163,184,0.4); }
 
     .weather-icon-big { font-size: 5rem; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.15)); line-height: 1; }
@@ -233,31 +227,31 @@
       transition: transform .2s, background .2s;
     }
     .forecast-day:hover { transform: translateY(-3px); }
-    body.night .forecast-day { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.08); }
+    
     .forecast-day.today {
       background: rgba(255,255,255,0.62); border-color: rgba(255,255,255,0.9);
       box-shadow: 0 2px 10px rgba(0,0,0,0.07);
     }
-    body.night .forecast-day.today { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.25); }
+    
     .forecast-day.selected-day {
       outline: 2px solid #f59e0b;
       outline-offset: -2px;
       background: rgba(245,158,11,0.12);
     }
-    body.night .forecast-day.selected-day { background: rgba(245,158,11,0.18); }
+    
 
     .detail-chip {
       background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.6);
       border-radius: .75rem; padding: .5rem 1rem;
     }
-    body.night .detail-chip { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+    
 
     .fav-panel {
       background: rgba(255,255,255,0.45); backdrop-filter: blur(16px);
       border: 1px solid rgba(255,255,255,0.65); border-radius: 1.5rem;
       box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
-    body.night .fav-panel { background: rgba(10,20,50,0.50); border-color: rgba(255,255,255,0.1); }
+    
 
     .fav-chip {
       display: inline-flex; align-items: center; gap: 5px;
@@ -266,7 +260,7 @@
       font-size: .78rem; cursor: pointer; color: #334155; transition: all .15s;
     }
     .fav-chip:hover { background: rgba(255,255,255,0.88); transform: scale(1.04); }
-    body.night .fav-chip { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.15); color: #cbd5e1; }
+    
     .rm-fav { color: #94a3b8; font-size: .68rem; transition: color .15s; }
     .fav-chip:hover .rm-fav { color: #ef4444; }
 
@@ -289,7 +283,7 @@
     }
     .geo-btn:hover { background: rgba(255,255,255,0.85); transform: scale(1.06); }
     .geo-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-    body.night .geo-btn { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #cbd5e1; }
+    
     @keyframes pulse-ring {
       0%   { transform: scale(1); opacity: .7; }
       100% { transform: scale(2); opacity: 0; }
@@ -320,12 +314,12 @@
       transition: transform .2s, background .2s;
     }
     .tod-slot:hover { transform: translateY(-2px); background: rgba(255,255,255,0.55); }
-    body.night .tod-slot { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+    
     .tod-slot.active {
       background: rgba(255,255,255,0.68); border-color: rgba(255,255,255,0.95);
       box-shadow: 0 2px 12px rgba(0,0,0,0.07);
     }
-    body.night .tod-slot.active { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.3); }
+    
     .tod-icon { font-size: 1.4rem; line-height: 1; }
 
 
@@ -333,11 +327,14 @@
     .logo-header {
       text-align: center;
       margin-bottom: .5rem;
+      background: linear-gradient(160deg, #bae6fd 0%, #e0f2fe 55%, #f0f9ff 100%);
+      border-radius: 1.25rem;
+      padding: .5rem .5rem .25rem;
     }
     .logo-header img {
       width: 100%;
       height: auto;
-      filter: drop-shadow(0 4px 16px rgba(0,0,0,0.12));
+      filter: drop-shadow(0 4px 16px rgba(0,0,0,0.08));
       transition: transform .3s ease;
     }
     .logo-header img:hover { transform: scale(1.04); }
@@ -378,7 +375,7 @@
   position:fixed;inset:0;z-index:9999;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  background:linear-gradient(160deg,#e0f2fe 0%,#bae6fd 40%,#fde68a 100%);
+  background:linear-gradient(160deg,#bae6fd 0%,#e0f2fe 55%,#f0f9ff 100%);
   padding:2rem;text-align:center;
 ">
   <div style="max-width:380px;width:100%;">
