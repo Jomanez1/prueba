@@ -16,11 +16,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 // 🔧 PASO 1: Cambia a TRUE cuando tengas tus IDs de AdMob reales
-const USE_PRODUCTION = false; // ← Cambia a: true
+const USE_PRODUCTION = true; // ← Cambia a: true
 
 // 🔧 PASO 2: Pon aquí tus IDs reales de AdMob (cuando los tengas)
 const ADMOB_PRODUCTION = {
-  publisherId: 'ca-pub-2753616648390510',              // ← TU PUBLISHER ID
+  publisherId: 'ca-app-pub-2753616648390510~2806355919',              // ← TU PUBLISHER ID
   bannerTopId: 'ca-app-pub-2753616648390510/3892352660', // ← TU BANNER SUPERIOR
   bannerBottomId: 'ca-app-pub-2753616648390510/3517277719', // ← TU BANNER INFERIOR
   interstitialId: 'ca-app-pub-2753616648390510/5951869367'  // ← TU INTERSTICIAL
@@ -224,34 +224,6 @@ body{background:var(--bg);color:var(--tx);font-family:'Nunito',sans-serif;min-he
 .fl2.b{background:rgba(57,232,122,0.05);opacity:1;}
 .fl2.a{background:rgba(255,45,155,0.1);opacity:1;}
 
-/* Help button */
-.help-btn{width:28px;height:28px;border-radius:50%;border:2px solid var(--pk);background:transparent;color:var(--pk);font-size:14px;font-weight:900;cursor:pointer;line-height:1;flex-shrink:0;}
-
-/* Walkthrough overlay */
-.wt-overlay{position:fixed;inset:0;z-index:9000;pointer-events:none;}
-.wt-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9001;pointer-events:all;}
-.wt-highlight{position:fixed;z-index:9002;border-radius:10px;box-shadow:0 0 0 4px var(--pk),0 0 0 8px rgba(255,45,155,0.3);pointer-events:none;transition:all 0.35s cubic-bezier(0.4,0,0.2,1);}
-.wt-hole{position:fixed;z-index:9002;border-radius:10px;pointer-events:none;}
-.wt-tooltip{position:fixed;z-index:9003;background:#1a1a2e;border:1px solid var(--pk);border-radius:14px;padding:16px 18px;max-width:280px;min-width:220px;box-shadow:0 8px 32px rgba(0,0,0,0.6);pointer-events:all;transition:all 0.35s cubic-bezier(0.4,0,0.2,1);}
-.wt-arrow{position:absolute;width:0;height:0;}
-.wt-arrow.up{border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:12px solid var(--pk);top:-12px;left:50%;transform:translateX(-50%);}
-.wt-arrow.down{border-left:10px solid transparent;border-right:10px solid transparent;border-top:12px solid var(--pk);bottom:-12px;left:50%;transform:translateX(-50%);}
-.wt-arrow.left{border-top:10px solid transparent;border-bottom:10px solid transparent;border-right:12px solid var(--pk);left:-12px;top:50%;transform:translateY(-50%);}
-.wt-arrow.right{border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:12px solid var(--pk);right:-12px;top:50%;transform:translateY(-50%);}
-.wt-step{font-size:11px;color:var(--pk);font-weight:700;letter-spacing:1px;margin-bottom:6px;}
-.wt-title{font-size:15px;font-weight:800;color:#fff;margin-bottom:6px;}
-.wt-desc{font-size:13px;color:var(--mu);line-height:1.5;}
-.wt-footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:8px;}
-.wt-dots{display:flex;gap:5px;}
-.wt-dot{width:7px;height:7px;border-radius:50%;background:var(--s3);transition:background 0.2s;}
-.wt-dot.on{background:var(--pk);}
-.wt-skip{background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;padding:0;}
-.wt-next{background:linear-gradient(135deg,var(--pk),#e91e8c);border:none;color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:800;cursor:pointer;}
-
-/* Rate button */
-.rate-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 20px;background:linear-gradient(135deg,var(--pk),#e91e8c);color:#fff;font-size:13px;font-weight:800;text-decoration:none;letter-spacing:0.5px;transition:background 0.2s;margin-bottom:70px;border-radius:10px;}
-.rate-btn:active{background:linear-gradient(135deg,#252540,#1e2a4a);}
-
 /* Splash screen */
 .splash{position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;}
 .splash-logo{font-family:'Fredoka One',cursive;font-size:48px;background:linear-gradient(135deg,var(--pk),var(--yl),var(--gr));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;line-height:1.1;}
@@ -284,16 +256,13 @@ body{background:var(--bg);color:var(--tx);font-family:'Nunito',sans-serif;min-he
 <div class="app">
 <div class="hdr">
   <div class="logo">🎵 MetroMaestro</div>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <button class="help-btn" onclick="startWalkthrough()" title="Ayuda">?</button>
-    <div class="langs">
-      <button class="lb on" onclick="setL('es')">ES</button>
-      <button class="lb" onclick="setL('en')">EN</button>
-      <button class="lb" onclick="setL('fr')">FR</button>
-      <button class="lb" onclick="setL('de')">DE</button>
-      <button class="lb" onclick="setL('it')">IT</button>
-      <button class="lb" onclick="setL('pt')">PT</button>
-    </div>
+  <div class="langs">
+    <button class="lb on" onclick="setL('es')">ES</button>
+    <button class="lb" onclick="setL('en')">EN</button>
+    <button class="lb" onclick="setL('fr')">FR</button>
+    <button class="lb" onclick="setL('de')">DE</button>
+    <button class="lb" onclick="setL('it')">IT</button>
+    <button class="lb" onclick="setL('pt')">PT</button>
   </div>
 </div>
 
@@ -485,10 +454,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Nunito',sans-serif;min-he
   <div class="cents-display" id="centsDisplay">0¢</div>
   
   <button class="tbtn" id="tbtn" onclick="togTuner()">🎙️</button>
-<a class="rate-btn" href="https://play.google.com/store/apps/details?id=com.tuempresa.metromaestro" target="_blank">
-  ⭐ ¿Te gusta MetroMaestro? ¡Valóranos en Play Store!
-</a>
-
+</div>
 </div>
 
 </div>
@@ -673,89 +639,7 @@ function initTuningSelector(){const container=g('tuningSelector');if(!container)
 
 function pFreq(freq){const c=gCtx(),now=c.currentTime,g2=c.createGain();g2.connect(MG);[1,2,3,4].forEach((h,i)=>{const o=c.createOscillator(),g3=c.createGain();o.type='sine';o.frequency.value=freq*h;g3.gain.setValueAtTime(0,now);g3.gain.linearRampToValueAtTime(0.13/(i+1),now+0.02);g3.gain.exponentialRampToValueAtTime(0.001,now+2);o.connect(g3);g3.connect(g2);o.start(now);o.stop(now+2.1);});}
 
-function startApp(){g('splash').classList.add('hidden');showInterstitialPlaceholder();if(!localStorage.getItem('mm_tour_done')){setTimeout(startWalkthrough,600);}}
-
-// ═══════════════════════════════════════════════
-// 🎓 WALKTHROUGH
-// ═══════════════════════════════════════════════
-const WT_STEPS=[
-  {target:'pb',      title:'▶ Play / Pausa',        desc:'Pulsa para arrancar el metrónomo. El péndulo se moverá y escucharás el clic al ritmo que marques.',                         arrow:'up'},
-  {target:'bsl',     title:'🎚 Ajusta el BPM',       desc:'Desliza para cambiar la velocidad. También puedes usar los botones − y + para ir de uno en uno.',                          arrow:'up'},
-  {target:'btap-tap',title:'👆 Botón TAP',            desc:'¿No sabes el BPM de tu canción? Pulsa TAP varias veces al ritmo y MetroMaestro lo calculará automáticamente.',             arrow:'up'},
-  {target:'pb-ts',   title:'🎼 Compás',              desc:'Elige entre 2/4, 3/4, 4/4 y más. El primer tiempo siempre suena más fuerte para que identifiques el acento.',              arrow:'up'},
-  {target:'pb-sn',   title:'🔊 Sonido de clic',      desc:'Cambia entre distintos timbres: clásico, madera, campana… y ajusta el volumen y el swing a tu gusto.',                    arrow:'up'},
-  {target:'dpb',     title:'🥁 Batería independiente',desc:'Una batería con su propio BPM. Puedes usarla sola o sincronizarla con el metrónomo mediante el botón SYNC.',               arrow:'up'},
-  {target:'tab-t',   title:'🎸 Afinador',            desc:'Cambia a la pestaña del afinador para afinar tu instrumento con el micrófono. Soporta guitarra, bajo, ukulele y más.',     arrow:'down'},
-  {target:'help-btn-wt', title:'❓ Esta ayuda',       desc:'Puedes volver a ver este tutorial en cualquier momento pulsando el botón ? del encabezado.',                               arrow:'up'},
-];
-
-let wtStep=0,wtOverlay=null;
-
-function startWalkthrough(){wtStep=0;buildWTOverlay();showWTStep();}
-
-function buildWTOverlay(){if(wtOverlay)wtOverlay.remove();wtOverlay=document.createElement('div');wtOverlay.className='wt-overlay';wtOverlay.id='wt-overlay';document.body.appendChild(wtOverlay);
-  const bd=document.createElement('div');bd.className='wt-backdrop';bd.onclick=()=>nextWTStep();wtOverlay.appendChild(bd);
-  const hl=document.createElement('div');hl.className='wt-highlight';hl.id='wt-hl';wtOverlay.appendChild(hl);
-  const tt=document.createElement('div');tt.className='wt-tooltip';tt.id='wt-tt';wtOverlay.appendChild(tt);}
-
-function showWTStep(){if(!wtOverlay)return;const s=WT_STEPS[wtStep];
-  // Find target
-  let el=null;
-  if(s.target==='btap-tap'){el=document.querySelector('.btap');}
-  else if(s.target==='help-btn-wt'){el=document.querySelector('.help-btn');}
-  else{el=g(s.target);}
-  if(!el){nextWTStep();return;}
-
-  // If panel is collapsed, expand it
-  if(s.target==='pb-ts'&&el.classList.contains('op')){togP('ts');}
-  if(s.target==='pb-sn'&&el.classList.contains('op')){togP('sn');}
-
-  // Scroll element into view
-  el.scrollIntoView({behavior:'smooth',block:'center'});
-
-  setTimeout(()=>{
-    const r=el.getBoundingClientRect(),pad=8;
-    const hl=g('wt-hl');
-    hl.style.cssText=`top:${r.top-pad}px;left:${r.left-pad}px;width:${r.width+pad*2}px;height:${r.height+pad*2}px;`;
-
-    // Build tooltip
-    const tt=g('wt-tt');
-    const isLast=wtStep===WT_STEPS.length-1;
-    const dots=WT_STEPS.map((_,i)=>`<div class="wt-dot${i===wtStep?' on':''}"></div>`).join('');
-    tt.innerHTML=`
-      <div class="wt-arrow ${s.arrow}"></div>
-      <div class="wt-step">PASO ${wtStep+1} DE ${WT_STEPS.length}</div>
-      <div class="wt-title">${s.title}</div>
-      <div class="wt-desc">${s.desc}</div>
-      <div class="wt-footer">
-        <div class="wt-dots">${dots}</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button class="wt-skip" onclick="endWalkthrough()">Saltar</button>
-          <button class="wt-next" onclick="nextWTStep()">${isLast?'¡Listo!':'Siguiente →'}</button>
-        </div>
-      </div>`;
-
-    // Position tooltip
-    const vw=window.innerWidth,vh=window.innerHeight;
-    const tw=280,th=160;
-    let top,left;
-    if(s.arrow==='up'){top=r.bottom+pad+14;left=Math.min(Math.max(r.left+r.width/2-tw/2,10),vw-tw-10);}
-    else if(s.arrow==='down'){top=r.top-pad-th-20;left=Math.min(Math.max(r.left+r.width/2-tw/2,10),vw-tw-10);}
-    else{top=Math.min(Math.max(r.top+r.height/2-th/2,10),vh-th-10);left=s.arrow==='left'?r.right+20:r.left-tw-20;}
-    // Clamp vertical
-    if(top+th>vh-10)top=vh-th-10;
-    if(top<10)top=10;
-    tt.style.cssText=`top:${top}px;left:${left}px;width:${tw}px;`;
-
-    // Fix arrow position when tooltip is clamped
-    const arrow=tt.querySelector('.wt-arrow');
-    if(s.arrow==='up'||s.arrow==='down'){const arrowLeft=r.left+r.width/2-left;arrow.style.left=Math.max(20,Math.min(tw-20,arrowLeft))+'px';arrow.style.transform='none';}
-  },350);}
-
-function nextWTStep(){wtStep++;if(wtStep>=WT_STEPS.length){endWalkthrough();}else{showWTStep();}}
-
-function endWalkthrough(){if(wtOverlay){wtOverlay.remove();wtOverlay=null;}localStorage.setItem('mm_tour_done','1');}
-
+function startApp(){g('splash').classList.add('hidden');showInterstitialPlaceholder();}
 
 window.addEventListener('DOMContentLoaded',()=>{rBeats();rTSig();rSnd();rDrum();updTName();updDBpmUI();updSyncBar();updI();initTuningSelector();updateStringsDisplay(null);gCtx();loadDrumSamples();});
 </script>
