@@ -4,7 +4,7 @@
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Divertiviaje! 🌈 Concurso de Preguntas</title>
+<title>Divertiviajes! 🌈 Concurso de Preguntas</title>
 
 <!-- ============================================================
   ADMOB — IDs DE PRUEBA (Google oficiales, funcionan sin cuenta)
@@ -397,8 +397,8 @@ window.adsbygoogle = window.adsbygoogle || [];
 <!-- ====== SPLASH SCREEN ====== -->
 <div id="screen-splash">
   <div class="splash-stars" id="splashStars"></div>
-  <img src="launchericon-512x512.png" alt="Divertiviaje Logo" class="splash-logo-img">
-  <div class="splash-title">🌈 Divertiviaje!</div>
+  <img src="launchericon-512x512.png" alt="Divertiviajes Logo" class="splash-logo-img">
+  <div class="splash-title">🌈 Divertiviajes!</div>
   <div class="splash-tagline">¡El concurso de preguntas más divertido! 🎉</div>
   <button class="btn-splash" onclick="startSplash()">🚀 ¡Comenzar!</button>
 </div>
@@ -408,7 +408,7 @@ window.adsbygoogle = window.adsbygoogle || [];
 <!-- ====== CONFIGURACIÓN ====== -->
 <div class="screen active" id="screen-setup">
   <div class="card">
-    <div class="logo">🌈 Divertiviaje!</div>
+    <div class="logo">🌈 Divertiviajes!</div>
     <div class="subtitle">¡El concurso de preguntas más divertido! 🎉</div>
 
     <div id="alertMsg" class="alert"></div>
@@ -539,6 +539,7 @@ const state = {
   players:[], rounds:5, narratorIdx:0,
   currentRound:1, currentPlayerIdx:0, scores:[],
   usedQuestions:{ facil:new Set(), media:new Set(), dificil:new Set() },
+  questionQueue:{ facil:[], media:[], dificil:[] },  // cola persistente entre partidas
   currentQuestion:null, answered:false,
   ttsRate:1.25, ttsPitch:1.1,
   questionsDB:null, roundAnswers:[],
@@ -1164,11 +1165,23 @@ function getDiff(age){ return age<=8?'facil':age<=13?'media':'dificil'; }
 function getDiffLabel(d){ return {facil:'⭐ Fácil',media:'⭐⭐ Media',dificil:'⭐⭐⭐ Difícil'}[d]; }
 function getDiffClass(d){ return {facil:'diff-facil',media:'diff-media',dificil:'diff-dificil'}[d]; }
 
+function shuffleArray(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
 function getQuestion(diff){
-  const pool=state.questionsDB[diff], used=state.usedQuestions[diff];
-  if(used.size>=pool.length) used.clear();
-  let idx; do{ idx=Math.floor(Math.random()*pool.length); }while(used.has(idx));
-  used.add(idx);
+  const pool = state.questionsDB[diff];
+  const queue = state.questionQueue[diff];
+  // Si la cola está vacía, rellenarla con todos los índices en orden aleatorio
+  if(queue.length === 0){
+    const indices = pool.map((_,i)=>i);
+    const shuffled = shuffleArray(indices);
+    queue.push(...shuffled);
+  }
+  // Sacar el primero de la cola (no se repite hasta haberlas visto todas)
+  const idx = queue.shift();
   return shuffleOptions(pool[idx]);
 }
 
