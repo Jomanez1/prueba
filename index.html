@@ -53,7 +53,13 @@ function showInterstitialAd() {
   }
 }
 
+let lastInterstitialTime = 0;
+const INTERSTITIAL_COOLDOWN = 30000;
+
 function showInterstitialPlaceholder() {
+  const now = Date.now();
+  if (now - lastInterstitialTime < INTERSTITIAL_COOLDOWN) return;
+  lastInterstitialTime = now;
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;';
   overlay.innerHTML = `
@@ -195,7 +201,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Nunito',sans-serif;min-he
 .strings{display:flex;gap:3px;justify-content:center;}
 .string{flex:1;padding:10px 4px;background:var(--s2);border:2px solid rgba(255,255,255,0.08);border-radius:8px;text-align:center;font-size:16px;font-weight:700;color:var(--mu);transition:all 0.2s;}
 .string.target{background:rgba(57,232,122,0.15);border-color:var(--gr);color:var(--gr);transform:scale(1.08);}
-.note-nav-container{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0;}
+.note-nav-container{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0 20px 0;}
 .note-nav{width:65px;height:65px;background:var(--s2);border:2px solid rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:var(--mu);}
 .note-current{font-size:68px;font-weight:800;font-family:'Fredoka One',cursive;color:var(--tx);transition:all 0.3s;text-align:center;line-height:1;}
 .note-current.in-tune{color:var(--gr);transform:scale(1.12);text-shadow:0 0 20px rgba(57,232,122,0.5);}
@@ -206,7 +212,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Nunito',sans-serif;min-he
 .status-display.in-tune{color:var(--gr);}
 .status-display.sharp{color:var(--or);}
 .status-display.flat{color:var(--bl);}
-.meter-container{position:relative;width:100%;height:160px;margin:10px 0;}
+.meter-container{position:relative;width:100%;height:160px;margin:30px 0 10px 0;}
 .meter-svg{width:100%;height:100%;}
 .meter-needle{position:absolute;bottom:8px;left:50%;width:3px;height:115px;background:linear-gradient(to top,var(--s3),#fff);transform-origin:bottom center;transform:translateX(-50%) rotate(0deg);transition:transform 0.2s ease-out;border-radius:2px;box-shadow:0 0 8px rgba(0,0,0,0.5);z-index:10;}
 .meter-needle::before{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;background:radial-gradient(circle,var(--mu),var(--s3));border-radius:50%;border:2px solid var(--s2);}
@@ -446,7 +452,6 @@ body{background:var(--bg);color:var(--tx);font-family:'Nunito',sans-serif;min-he
     <div class="note-nav" id="nextNote">—</div>
   </div>
   
-  <div class="freq-display" id="freqDisplay">— Hz</div>
   <div class="status-display" id="statusDisplay" style="display:none;"></div>
 
   <div class="meter-container">
@@ -487,6 +492,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Nunito',sans-serif;min-he
     </div>
   </div>
   
+  <div class="freq-display" id="freqDisplay">— Hz</div>
   <div class="cents-display" id="centsDisplay">0¢</div>
 
   <button class="tbtn" id="tbtn" onclick="togTuner()" style="display:none;">🎙️</button>
