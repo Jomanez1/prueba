@@ -671,10 +671,14 @@ const WMO_ICONS = {
   71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',
   95:'⛈️',96:'⛈️',99:'⛈️',
 };
-function wmo(code) {
+// Iconos nocturnos para cielo despejado o poco nublado
+const WMO_ICONS_NIGHT = { 0:'🌙', 1:'🌙', 2:'☁️' };
+
+function wmo(code, isNight = false) {
+  const icon = (isNight && WMO_ICONS_NIGHT[code]) ? WMO_ICONS_NIGHT[code] : (WMO_ICONS[code] || '🌡️');
   return {
     label: t().wmoLabels[code] || '—',
-    icon:  WMO_ICONS[code]     || '🌡️',
+    icon,
   };
 }
 
@@ -875,8 +879,9 @@ function renderTOD(hourly, dayIndex, dateStr) {
   if (labelEl) labelEl.textContent = dayLabel;
 
   document.getElementById('tod').innerHTML = slots.map(slot => {
+    const isNight = slot.start >= 22 || slot.end <= 5; // noche y madrugada
     const stats = sliceStats(slot.start, slot.end);
-    const icon  = stats ? wmo(stats.code).icon : slot.emoji;
+    const icon  = stats ? wmo(stats.code, isNight).icon : slot.emoji;
     const temp  = stats ? stats.temp + '°' : '—';
     const feels = stats && stats.feels !== undefined ? '🌡️' + stats.feels + '°' : '';
     const wind  = stats && stats.wind  !== undefined ? '💨' + stats.wind        : '';
