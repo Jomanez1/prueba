@@ -9,6 +9,8 @@
 
 
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
   <style>
 
@@ -588,21 +590,27 @@
     onmouseout="this.style.background='rgba(255,255,255,0.08)'"
     >✕</button>
   </div>
-  <!-- Mapa iframe -->
+  <!-- Controles de animación -->
+  <div style="display:flex;align-items:center;justify-content:center;gap:.75rem;padding:.5rem 1rem;background:rgba(15,23,42,0.9);flex-shrink:0;">
+    <button id="radar-play-btn" onclick="radarTogglePlay()" style="
+      background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);
+      color:#38bdf8;border-radius:999px;padding:.3rem .9rem;font-size:.75rem;
+      font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;">
+      ▶ Play
+    </button>
+    <span id="radar-time-label" style="color:#94a3b8;font-size:.72rem;font-family:'DM Sans',sans-serif;min-width:120px;text-align:center;">—</span>
+  </div>
+  <!-- Mapa Leaflet -->
   <div style="flex:1;position:relative;">
     <div id="radar-loading" style="
       position:absolute;inset:0;display:flex;flex-direction:column;
       align-items:center;justify-content:center;gap:.75rem;
-      background:#0f172a; z-index:1;
+      background:#0f172a; z-index:1000;
     ">
       <div style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top-color:#38bdf8;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-      <span style="color:#94a3b8;font-size:.8rem;font-family:'DM Sans',sans-serif;">Cargando radar…</span>
+      <span style="color:#94a3b8;font-size:.8rem;font-family:'DM Sans',sans-serif;" id="radar-loading-text">Cargando radar…</span>
     </div>
-    <iframe id="radar-iframe"
-      style="width:100%;height:100%;border:none;display:block;"
-      allow="geolocation"
-      onload="document.getElementById('radar-loading').style.display='none'">
-    </iframe>
+    <div id="radar-map" style="width:100%;height:100%;"></div>
   </div>
   <!-- Footer -->
   <div style="
@@ -1327,31 +1335,81 @@ function wtRestart() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  RADAR DE PRECIPITACIONES — RainViewer
+//  RADAR DE PRECIPITACIONES — RainViewer API + Leaflet
 // ════════════════════════════════════════════════════════════════
-function openRadar() {
-  const zoom = 7;
-  const url  = `https://www.rainviewer.com/map.html`
-    + `?loc=${_lastLat.toFixed(4)},${_lastLon.toFixed(4)},${zoom}`
-    + `&oFa=0&oC=1&oU=0&oCS=1&oF=0&oAP=1&rmt=4&ref=1&sort=0&ms=1&animation=1&RAf=1&c=3&mtx=1`;
+let _radarMap = null, _radarLayer = null, _radarFrames = [], _radarIdx = 0, _radarTimer = null, _radarPlaying = false;
 
+async function openRadar() {
   const screen = document.getElementById('radar-screen');
-  const iframe = document.getElementById('radar-iframe');
-  const loading = document.getElementById('radar-loading');
-  const title = document.getElementById('radar-title');
-
-  title.textContent = t().radarTitle || 'Radar de precipitaciones';
-  loading.style.display = 'flex';
-  iframe.src = url;
   screen.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  document.getElementById('radar-title').textContent = t().radarTitle || 'Radar de precipitaciones';
+  document.getElementById('radar-loading').style.display = 'flex';
+  document.getElementById('radar-play-btn').textContent = '▶ Play';
+  _radarPlaying = false;
+
+  // Inicializar mapa Leaflet solo la primera vez
+  if (!_radarMap) {
+    _radarMap = L.map('radar-map', { zoomControl: true, attributionControl: false })
+      .setView([_lastLat, _lastLon], 7);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 18
+    }).addTo(_radarMap);
+  } else {
+    _radarMap.setView([_lastLat, _lastLon], 7);
+  }
+
+  // Forzar que Leaflet recalcule el tamaño al mostrarse
+  setTimeout(() => _radarMap.invalidateSize(), 100);
+
+  // Obtener frames de RainViewer API
+  try {
+    const res  = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+    const json = await res.json();
+    _radarFrames = json.radar.past.concat(json.radar.nowcast || []);
+    _radarIdx    = _radarFrames.length - 1;
+    _showRadarFrame(_radarIdx);
+    document.getElementById('radar-loading').style.display = 'none';
+  } catch(e) {
+    document.getElementById('radar-loading-text').textContent = 'Error al cargar el radar';
+  }
+}
+
+function _showRadarFrame(idx) {
+  if (!_radarFrames.length) return;
+  const frame = _radarFrames[idx];
+  if (_radarLayer) _radarMap.removeLayer(_radarLayer);
+  _radarLayer = L.tileLayer(
+    `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+    { opacity: 0.7, maxZoom: 18 }
+  ).addTo(_radarMap);
+  // Etiqueta de hora
+  const d = new Date(frame.time * 1000);
+  const hm = d.toLocaleTimeString(t().dateLocale || 'es-ES', {hour:'2-digit', minute:'2-digit'});
+  const dateStr = d.toLocaleDateString(t().dateLocale || 'es-ES', {day:'numeric', month:'short'});
+  document.getElementById('radar-time-label').textContent = `${dateStr} · ${hm}`;
+}
+
+function radarTogglePlay() {
+  if (_radarPlaying) {
+    clearInterval(_radarTimer);
+    _radarPlaying = false;
+    document.getElementById('radar-play-btn').textContent = '▶ Play';
+  } else {
+    _radarPlaying = true;
+    document.getElementById('radar-play-btn').textContent = '⏸ Pausa';
+    _radarTimer = setInterval(() => {
+      _radarIdx = (_radarIdx + 1) % _radarFrames.length;
+      _showRadarFrame(_radarIdx);
+    }, 600);
+  }
 }
 
 function closeRadar() {
-  const screen = document.getElementById('radar-screen');
-  const iframe = document.getElementById('radar-iframe');
-  screen.style.display = 'none';
-  iframe.src = '';
+  clearInterval(_radarTimer);
+  _radarPlaying = false;
+  document.getElementById('radar-play-btn').textContent = '▶ Play';
+  document.getElementById('radar-screen').style.display = 'none';
   document.body.style.overflow = '';
 }
 </script>
