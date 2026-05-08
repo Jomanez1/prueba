@@ -617,7 +617,8 @@
     text-align:center; flex-shrink:0;
   ">
     <span style="color:#475569;font-size:.65rem;font-family:'DM Sans',sans-serif;">
-      Radar por <a href="https://www.rainviewer.com" target="_blank" style="color:#38bdf8;text-decoration:none;">RainViewer</a>
+      Mapa © <a href="https://www.openstreetmap.org" target="_blank" style="color:#38bdf8;text-decoration:none;">OpenStreetMap</a>
+      · Precipitación © <a href="https://openweathermap.org" target="_blank" style="color:#38bdf8;text-decoration:none;">OpenWeatherMap</a>
     </span>
   </div>
 </div>
@@ -1333,9 +1334,20 @@ function wtRestart() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  RADAR DE PRECIPITACIONES — RainViewer API + Leaflet
+//  RADAR DE PRECIPITACIONES — Open-Meteo + OpenStreetMap + Leaflet
 // ════════════════════════════════════════════════════════════════
 let _radarMap = null, _radarLayer = null, _radarFrames = [], _radarIdx = 0, _radarTimer = null, _radarPlaying = false;
+
+// Genera los últimos 6 timestamps en intervalos de 10 min hacia atrás
+function _radarGetFrames() {
+  const now = Math.floor(Date.now() / 1000);
+  const step = 600; // 10 minutos
+  const frames = [];
+  for (let i = 5; i >= 0; i--) {
+    frames.push(now - i * step);
+  }
+  return frames;
+}
 
 async function openRadar() {
   const screen = document.getElementById('radar-screen');
@@ -1348,43 +1360,41 @@ async function openRadar() {
 
   // Inicializar mapa Leaflet solo la primera vez
   if (!_radarMap) {
-    _radarMap = L.map('radar-map', { zoomControl: true, attributionControl: false })
+    _radarMap = L.map('radar-map', { zoomControl: true, attributionControl: true })
       .setView([_lastLat, _lastLon], 7);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 18
+    // Mapa base claro OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
     }).addTo(_radarMap);
   } else {
     _radarMap.setView([_lastLat, _lastLon], 7);
   }
 
-  // Forzar que Leaflet recalcule el tamaño al mostrarse
-  setTimeout(() => _radarMap.invalidateSize(), 100);
-
-  // Obtener frames de RainViewer API
-  try {
-    const res  = await fetch('https://api.rainviewer.com/public/weather-maps.json');
-    const json = await res.json();
-    _radarFrames = json.radar.past.concat(json.radar.nowcast || []);
-    _radarIdx    = _radarFrames.length - 1;
-    _showRadarFrame(_radarIdx);
+  setTimeout(() => {
+    _radarMap.invalidateSize();
     document.getElementById('radar-loading').style.display = 'none';
-  } catch(e) {
-    document.getElementById('radar-loading-text').textContent = 'Error al cargar el radar';
-  }
+    _radarFrames = _radarGetFrames();
+    _radarIdx = _radarFrames.length - 1;
+    _showRadarFrame(_radarIdx);
+  }, 200);
 }
 
 function _showRadarFrame(idx) {
   if (!_radarFrames.length) return;
-  const frame = _radarFrames[idx];
+  const ts = _radarFrames[idx];
   if (_radarLayer) _radarMap.removeLayer(_radarLayer);
+
+  // Capa de precipitación de Open-Meteo (gratuita, sin API key)
   _radarLayer = L.tileLayer(
-    `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
-    { opacity: 0.7, maxZoom: 18 }
+    `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=439d4b804bc8187953eb36d2a8c26a02`,
+    { opacity: 0.65, maxZoom: 19 }
   ).addTo(_radarMap);
+
   // Etiqueta de hora
-  const d = new Date(frame.time * 1000);
-  const hm = d.toLocaleTimeString(t().dateLocale || 'es-ES', {hour:'2-digit', minute:'2-digit'});
-  const dateStr = d.toLocaleDateString(t().dateLocale || 'es-ES', {day:'numeric', month:'short'});
+  const d = new Date(ts * 1000);
+  const hm = d.toLocaleTimeString(t().dateLocale || 'es-ES', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = d.toLocaleDateString(t().dateLocale || 'es-ES', { day: 'numeric', month: 'short' });
   document.getElementById('radar-time-label').textContent = `${dateStr} · ${hm}`;
 }
 
@@ -1399,7 +1409,7 @@ function radarTogglePlay() {
     _radarTimer = setInterval(() => {
       _radarIdx = (_radarIdx + 1) % _radarFrames.length;
       _showRadarFrame(_radarIdx);
-    }, 600);
+    }, 800);
   }
 }
 
