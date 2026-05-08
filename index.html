@@ -576,7 +576,7 @@
   ">
     <div style="display:flex;align-items:center;gap:.5rem;">
       <span style="font-size:1.2rem;">🌧️</span>
-      <span style="color:#e2e8f0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.95rem;" id="radar-title">Radar de precipitaciones</span>
+      <span style="color:#e2e8f0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.95rem;" id="radar-title">Radar meteorológico</span>
     </div>
     <button onclick="closeRadar()" style="
       background:rgba(255,255,255,0.08); border:none; cursor:pointer;
@@ -587,6 +587,27 @@
     onmouseover="this.style.background='rgba(255,255,255,0.15)'"
     onmouseout="this.style.background='rgba(255,255,255,0.08)'"
     >✕</button>
+  </div>
+  <!-- Selector de capa -->
+  <div style="display:flex;gap:.5rem;justify-content:center;padding:.5rem 1rem;background:rgba(15,23,42,0.9);flex-shrink:0;">
+    <button id="radar-btn-rain" onclick="radarSetLayer('rain')" style="
+      background:rgba(56,189,248,0.25);border:1.5px solid rgba(56,189,248,0.6);
+      color:#e2e8f0;border-radius:2rem;padding:.3rem .85rem;font-size:.78rem;
+      font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;transition:background .15s;">
+      🌧️ Lluvia
+    </button>
+    <button id="radar-btn-wind" onclick="radarSetLayer('wind')" style="
+      background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);
+      color:#94a3b8;border-radius:2rem;padding:.3rem .85rem;font-size:.78rem;
+      font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;transition:background .15s;">
+      💨 Viento
+    </button>
+    <button id="radar-btn-temp" onclick="radarSetLayer('temp')" style="
+      background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);
+      color:#94a3b8;border-radius:2rem;padding:.3rem .85rem;font-size:.78rem;
+      font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;transition:background .15s;">
+      🌡️ Temperatura
+    </button>
   </div>
   <!-- Controles de animación -->
   <!-- Windy tiene su propio reproductor integrado -->
@@ -636,7 +657,7 @@ const TRANSLATIONS = {
     dataBy:      'Datos:',
     noKey:       'sin API key',
     starTitle:   'Guardar en favoritos',
-    radarTitle:  'Radar de precipitaciones',
+    radarTitle:  'Radar meteorológico',
     radarLoading:'Cargando radar…',
     errorPrefix: '⚠️ ',
     notFound:    c => `No encontré "${c}"`,
@@ -685,7 +706,7 @@ const TRANSLATIONS = {
     dataBy:      'Data:',
     noKey:       'no API key',
     starTitle:   'Save to favourites',
-    radarTitle:  'Precipitation radar',
+    radarTitle:  'Weather radar',
     radarLoading:'Loading radar…',
     errorPrefix: '⚠️ ',
     notFound:    c => `Could not find "${c}"`,
@@ -740,7 +761,7 @@ function applyStaticTranslations() {
   // Elementos fuera de data-i18n
   document.getElementById('star-btn').title = t().starTitle;
   const radarTitleEl = document.getElementById('radar-title');
-  if (radarTitleEl) radarTitleEl.textContent = t().radarTitle || 'Radar de precipitaciones';
+  if (radarTitleEl) radarTitleEl.textContent = t().radarTitle || 'Radar meteorológico';
   document.getElementById('city-input').placeholder      = lang === 'es' ? 'Ciudad o código postal…' : 'City or postcode…';
 }
 
@@ -1332,24 +1353,46 @@ function wtRestart() {
 // ════════════════════════════════════════════════════════════════
 let _radarMap = null, _radarLayer = null, _radarFrames = [], _radarIdx = 0, _radarTimer = null, _radarPlaying = false;
 
+let _radarActiveLayer = 'rain';
+
+function _radarWindyUrl(overlay) {
+  const zoom = 7;
+  const overlayMap = { rain: 'rain', wind: 'wind', temp: 'temp' };
+  return `https://embed.windy.com/embed2.html`
+    + `?lat=${_lastLat.toFixed(4)}&lon=${_lastLon.toFixed(4)}&detailLat=${_lastLat.toFixed(4)}&detailLon=${_lastLon.toFixed(4)}`
+    + `&width=100%&height=100%&zoom=${zoom}&level=surface&overlay=${overlayMap[overlay]}&product=ecmwf`
+    + `&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates`
+    + `&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+}
+
+function radarSetLayer(layer) {
+  _radarActiveLayer = layer;
+  // Estilos activo/inactivo
+  ['rain','wind','temp'].forEach(l => {
+    const btn = document.getElementById(`radar-btn-${l}`);
+    if (!btn) return;
+    if (l === layer) {
+      btn.style.background = 'rgba(56,189,248,0.25)';
+      btn.style.borderColor = 'rgba(56,189,248,0.6)';
+      btn.style.color = '#e2e8f0';
+    } else {
+      btn.style.background = 'rgba(255,255,255,0.06)';
+      btn.style.borderColor = 'rgba(255,255,255,0.15)';
+      btn.style.color = '#94a3b8';
+    }
+  });
+  document.getElementById('radar-loading').style.display = 'flex';
+  document.getElementById('radar-iframe').src = _radarWindyUrl(layer);
+}
+
 function openRadar() {
   const screen = document.getElementById('radar-screen');
   screen.style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  document.getElementById('radar-title').textContent = t().radarTitle || 'Radar de precipitaciones';
+  document.getElementById('radar-title').textContent = t().radarTitle || 'Radar meteorológico';
   document.getElementById('radar-loading').style.display = 'flex';
-
-  // Windy embed con capa de precipitación, centrado en la ciudad actual
-  const zoom = 7;
-  const url = `https://embed.windy.com/embed2.html`
-    + `?lat=${_lastLat.toFixed(4)}&lon=${_lastLon.toFixed(4)}&detailLat=${_lastLat.toFixed(4)}&detailLon=${_lastLon.toFixed(4)}`
-    + `&width=100%&height=100%&zoom=${zoom}&level=surface&overlay=rain&product=ecmwf`
-    + `&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates`
-    + `&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
-
-  const iframe = document.getElementById('radar-iframe');
-  iframe.src = url;
-  screen.style.display = 'flex';
+  // Resetear al botón lluvia al abrir
+  radarSetLayer('rain');
 }
 
 function radarTogglePlay() {
