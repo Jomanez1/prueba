@@ -589,26 +589,22 @@
     >✕</button>
   </div>
   <!-- Controles de animación -->
-  <div style="display:flex;align-items:center;justify-content:center;gap:.75rem;padding:.5rem 1rem;background:rgba(15,23,42,0.9);flex-shrink:0;">
-    <button id="radar-play-btn" onclick="radarTogglePlay()" style="
-      background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);
-      color:#38bdf8;border-radius:999px;padding:.3rem .9rem;font-size:.75rem;
-      font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;">
-      ▶ Play
-    </button>
-    <span id="radar-time-label" style="color:#94a3b8;font-size:.72rem;font-family:'DM Sans',sans-serif;min-width:120px;text-align:center;">—</span>
-  </div>
-  <!-- Mapa Leaflet -->
+  <!-- Windy tiene su propio reproductor integrado -->
+  <!-- Iframe Windy -->
   <div style="flex:1;position:relative;">
     <div id="radar-loading" style="
       position:absolute;inset:0;display:flex;flex-direction:column;
       align-items:center;justify-content:center;gap:.75rem;
-      background:#0f172a; z-index:1000;
+      background:#0f172a; z-index:1000;pointer-events:none;
     ">
       <div style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top-color:#38bdf8;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
       <span style="color:#94a3b8;font-size:.8rem;font-family:'DM Sans',sans-serif;" id="radar-loading-text">Cargando radar…</span>
     </div>
-    <div id="radar-map" style="width:100%;height:100%;"></div>
+    <iframe id="radar-iframe"
+      style="width:100%;height:100%;border:none;display:block;"
+      allowfullscreen
+      onload="document.getElementById('radar-loading').style.display='none'">
+    </iframe>
   </div>
   <!-- Footer -->
   <div style="
@@ -617,12 +613,10 @@
     text-align:center; flex-shrink:0;
   ">
     <span style="color:#475569;font-size:.65rem;font-family:'DM Sans',sans-serif;">
-      Mapa © <a href="https://www.openstreetmap.org" target="_blank" style="color:#38bdf8;text-decoration:none;">OpenStreetMap</a>
-      · Precipitación © <a href="https://openweathermap.org" target="_blank" style="color:#38bdf8;text-decoration:none;">OpenWeatherMap</a>
+      Datos meteorológicos © <a href="https://www.windy.com" target="_blank" style="color:#38bdf8;text-decoration:none;">Windy</a>
     </span>
   </div>
 </div>
-
 
 
 <script>
@@ -1334,90 +1328,39 @@ function wtRestart() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  RADAR DE PRECIPITACIONES — Open-Meteo + OpenStreetMap + Leaflet
+//  RADAR DE PRECIPITACIONES — Windy widget embebido
 // ════════════════════════════════════════════════════════════════
 let _radarMap = null, _radarLayer = null, _radarFrames = [], _radarIdx = 0, _radarTimer = null, _radarPlaying = false;
 
-// Genera los últimos 6 timestamps en intervalos de 10 min hacia atrás
-function _radarGetFrames() {
-  const now = Math.floor(Date.now() / 1000);
-  const step = 600; // 10 minutos
-  const frames = [];
-  for (let i = 5; i >= 0; i--) {
-    frames.push(now - i * step);
-  }
-  return frames;
-}
-
-async function openRadar() {
+function openRadar() {
   const screen = document.getElementById('radar-screen');
   screen.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   document.getElementById('radar-title').textContent = t().radarTitle || 'Radar de precipitaciones';
   document.getElementById('radar-loading').style.display = 'flex';
-  document.getElementById('radar-play-btn').textContent = '▶ Play';
-  _radarPlaying = false;
 
-  // Inicializar mapa Leaflet solo la primera vez
-  if (!_radarMap) {
-    _radarMap = L.map('radar-map', { zoomControl: true, attributionControl: true })
-      .setView([_lastLat, _lastLon], 7);
-    // Mapa base claro OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(_radarMap);
-  } else {
-    _radarMap.setView([_lastLat, _lastLon], 7);
-  }
+  // Windy embed con capa de precipitación, centrado en la ciudad actual
+  const zoom = 7;
+  const url = `https://embed.windy.com/embed2.html`
+    + `?lat=${_lastLat.toFixed(4)}&lon=${_lastLon.toFixed(4)}&detailLat=${_lastLat.toFixed(4)}&detailLon=${_lastLon.toFixed(4)}`
+    + `&width=100%&height=100%&zoom=${zoom}&level=surface&overlay=rain&product=ecmwf`
+    + `&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates`
+    + `&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
 
-  setTimeout(() => {
-    _radarMap.invalidateSize();
-    document.getElementById('radar-loading').style.display = 'none';
-    _radarFrames = _radarGetFrames();
-    _radarIdx = _radarFrames.length - 1;
-    _showRadarFrame(_radarIdx);
-  }, 200);
-}
-
-function _showRadarFrame(idx) {
-  if (!_radarFrames.length) return;
-  const ts = _radarFrames[idx];
-  if (_radarLayer) _radarMap.removeLayer(_radarLayer);
-
-  // Capa de precipitación de Open-Meteo (gratuita, sin API key)
-  _radarLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=439d4b804bc8187953eb36d2a8c26a02`,
-    { opacity: 0.65, maxZoom: 19 }
-  ).addTo(_radarMap);
-
-  // Etiqueta de hora
-  const d = new Date(ts * 1000);
-  const hm = d.toLocaleTimeString(t().dateLocale || 'es-ES', { hour: '2-digit', minute: '2-digit' });
-  const dateStr = d.toLocaleDateString(t().dateLocale || 'es-ES', { day: 'numeric', month: 'short' });
-  document.getElementById('radar-time-label').textContent = `${dateStr} · ${hm}`;
+  const iframe = document.getElementById('radar-iframe');
+  iframe.src = url;
+  screen.style.display = 'flex';
 }
 
 function radarTogglePlay() {
-  if (_radarPlaying) {
-    clearInterval(_radarTimer);
-    _radarPlaying = false;
-    document.getElementById('radar-play-btn').textContent = '▶ Play';
-  } else {
-    _radarPlaying = true;
-    document.getElementById('radar-play-btn').textContent = '⏸ Pausa';
-    _radarTimer = setInterval(() => {
-      _radarIdx = (_radarIdx + 1) % _radarFrames.length;
-      _showRadarFrame(_radarIdx);
-    }, 800);
-  }
+  // Windy tiene su propio reproductor integrado, este botón no aplica
 }
 
 function closeRadar() {
-  clearInterval(_radarTimer);
-  _radarPlaying = false;
-  document.getElementById('radar-play-btn').textContent = '▶ Play';
-  document.getElementById('radar-screen').style.display = 'none';
+  const screen = document.getElementById('radar-screen');
+  const iframe = document.getElementById('radar-iframe');
+  screen.style.display = 'none';
+  iframe.src = '';
   document.body.style.overflow = '';
 }
 </script>
