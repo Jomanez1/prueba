@@ -145,11 +145,12 @@
 
     .weather-icon-big { font-size: 5rem; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.15)); line-height: 1; }
 
-    .forecast-row { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
+    .forecast-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 6px; }
     .forecast-day {
       background: rgba(255,255,255,0.30); border: 1px solid rgba(255,255,255,0.55);
-      border-radius: .85rem; padding: 12px 4px; text-align: center;
+      border-radius: .85rem; padding: 12px 6px; text-align: center;
       transition: transform .2s, background .2s;
+      min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
     }
     .forecast-day:hover { transform: translateY(-3px); }
     
@@ -919,22 +920,26 @@ function renderForecast(daily) {
     const icon      = dominantIcon(dateStr) || wmo(daily.weather_code[i]).icon;
     const dateLabel = i===0 ? '' : `${date.getDate()}/${date.getMonth()+1}`;
     const isSelected = i === _selectedDayIndex;
+    const precip = (daily.precipitation_sum?.[i] > 0)
+      ? `<p class="text-blue-400" style="font-size:.82rem;margin-top:2px;min-height:1.2em;">🌧️${Math.round(daily.precipitation_sum[i]*10)/10}mm</p>`
+      : `<p style="font-size:.82rem;margin-top:2px;min-height:1.2em;"></p>`;
     return `
       <div class="forecast-day ${i===0?'today':''} ${isSelected?'selected-day':''}"
            onclick="selectDay(${i}, '${dateStr}')" style="cursor:pointer">
-        <p class="text-xs font-medium ${i===0?'text-slate-700':'text-slate-500'}">${day}</p>
-        ${dateLabel?`<p class="text-slate-400" style="font-size:.72rem;line-height:1.2">${dateLabel}</p>`:''}
-        <p class="text-base my-1">${icon}</p>
-        <p class="text-slate-700 font-semibold" style="font-size:.88rem">${Math.round(daily.temperature_2m_max[i])}°</p>
-        <p class="text-slate-400" style="font-size:.82rem">${Math.round(daily.temperature_2m_min[i])}°</p>
-        <p class="text-slate-500" style="font-size:.75rem;margin-top:1px">🌡️${daily.apparent_temperature_max?.[i] !== undefined ? Math.round(daily.apparent_temperature_max[i]) + '°' : Math.round((daily.temperature_2m_max[i]+daily.temperature_2m_min[i])/2) + '°'}</p>
-        <p class="text-slate-400" style="font-size:.72rem;margin-top:1px">💨${Math.round(daily.wind_speed_10m_max[i])}</p>
-        ${(daily.precipitation_sum?.[i] > 0) ? `<p class="text-blue-400" style="font-size:.72rem;margin-top:1px">🌧️${Math.round(daily.precipitation_sum[i]*10)/10}mm</p>` : ''}
+        <p class="text-xs font-medium ${i===0?'text-slate-700':'text-slate-500'}" style="font-size:.85rem;min-height:1.3em;">${day}</p>
+        <p class="text-slate-400" style="font-size:.78rem;min-height:1.2em;">${dateLabel}</p>
+        <p class="text-base my-1" style="font-size:1.4rem;line-height:1;">${icon}</p>
+        <p class="text-slate-700 font-semibold" style="font-size:1rem;min-height:1.3em;">${Math.round(daily.temperature_2m_max[i])}°</p>
+        <p class="text-slate-400" style="font-size:.9rem;min-height:1.3em;">${Math.round(daily.temperature_2m_min[i])}°</p>
+        <p class="text-slate-500" style="font-size:.82rem;margin-top:2px;min-height:1.2em;">🌡️${daily.apparent_temperature_max?.[i] !== undefined ? Math.round(daily.apparent_temperature_max[i]) + '°' : Math.round((daily.temperature_2m_max[i]+daily.temperature_2m_min[i])/2) + '°'}</p>
+        <p class="text-slate-400" style="font-size:.82rem;margin-top:2px;min-height:1.2em;">💨${Math.round(daily.wind_speed_10m_max[i])}</p>
+        ${precip}
       </div>`;
   });
   document.getElementById('forecast').innerHTML = `
-    <div class="forecast-row mb-2">${allDays.slice(0,7).join('')}</div>
-    <div class="forecast-row">${allDays.slice(7,14).join('')}</div>`;
+    <div class="forecast-row">${allDays.slice(0,5).join('')}</div>
+    <div class="forecast-row">${allDays.slice(5,10).join('')}</div>
+    <div class="forecast-row">${allDays.slice(10,15).join('')}</div>`;
 }
 
 function selectDay(index, dateStr) {
