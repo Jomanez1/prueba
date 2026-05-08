@@ -926,7 +926,7 @@ function renderForecast(daily) {
     return `
       <div class="forecast-day ${i===0?'today':''} ${isSelected?'selected-day':''}"
            onclick="selectDay(${i}, '${dateStr}')" style="cursor:pointer">
-        <p class="text-xs font-medium ${i===0?'text-slate-700':'text-slate-500'}" style="font-size:.85rem;min-height:1.3em;">${day}</p>
+        <p class="text-xs font-medium ${i===0?'text-slate-700':'text-slate-500'}" style="font-size:.85rem;min-height:1.3em;font-weight:700;">${day}</p>
         <p class="text-slate-400" style="font-size:.78rem;min-height:1.2em;">${dateLabel}</p>
         <p class="text-base my-1" style="font-size:1.4rem;line-height:1;">${icon}</p>
         <p class="text-slate-700 font-semibold" style="font-size:1rem;min-height:1.3em;">${Math.round(daily.temperature_2m_max[i])}°</p>
